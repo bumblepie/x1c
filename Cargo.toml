@@ -2,8 +2,15 @@
 name = "xcom-1-card"
 version = "0.1.0"
 edition = "2021"
+default-run = "main"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "xcom_1_card"
+path = "src/lib.rs"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
 
 [dependencies]
 rand = "0.8"
