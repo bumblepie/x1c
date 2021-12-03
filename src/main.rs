@@ -1,11 +1,11 @@
 use indoc::indoc;
 use rand::prelude::*;
 use std::io::{stdin, stdout, Write};
-use xcom_1_card::{generate_prompts, PanicLevel};
+use xcom_1_card::{generate_timed_phase_prompts, PanicLevel};
 
 fn main() {
     let rng = &mut thread_rng();
-    let mut prompts = generate_prompts(0, PanicLevel::Yellow, 0, rng);
+    let mut prompts = generate_timed_phase_prompts(0, PanicLevel::Yellow, 0, rng);
     let keep_playing = true;
     let mut round = 0;
     while keep_playing {
@@ -67,6 +67,11 @@ fn main() {
         let mut buffer = String::new();
         stdin().read_line(&mut buffer).unwrap();
         round += 1;
-        prompts = generate_prompts(round, panic_response.unwrap(), ufos_response.unwrap(), rng);
+        prompts = generate_timed_phase_prompts(
+            round,
+            panic_response.unwrap(),
+            ufos_response.unwrap(),
+            rng,
+        );
     }
 }

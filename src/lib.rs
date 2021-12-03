@@ -27,8 +27,8 @@ where
     ALL_CONTINENTS.choose(rng).unwrap().clone()
 }
 
-#[derive(Debug, Clone)]
-pub enum Prompt {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TimedPhasePrompt {
     TakeIncome(i32),
     RollUFOLocation(Continent),
     AddUFOsToLocation(Continent, i32),
@@ -38,23 +38,27 @@ pub enum Prompt {
     AlienBaseDiscovered(Continent),
 }
 
-impl Prompt {
-    pub fn must_come_after(&self, other: &Prompt) -> bool {
+impl TimedPhasePrompt {
+    pub fn must_come_after(&self, other: &TimedPhasePrompt) -> bool {
         match self {
             // Can't add to a location until the related die has been rolled
-            Prompt::AddUFOsToLocation(location, _) => match other {
-                Prompt::RollUFOLocation(other_location) if other_location == location => true,
+            TimedPhasePrompt::AddUFOsToLocation(location, _) => match other {
+                TimedPhasePrompt::RollUFOLocation(other_location) if other_location == location => {
+                    true
+                }
                 _ => false,
             },
             // Let player at least see which die has been rolled for this location before making them assign interceptors
             // Dice might be swapped/added to after interceptors have been assigned
-            Prompt::AssignInterceptors(location) => match other {
-                Prompt::RollUFOLocation(other_location) if other_location == location => true,
+            TimedPhasePrompt::AssignInterceptors(location) => match other {
+                TimedPhasePrompt::RollUFOLocation(other_location) if other_location == location => {
+                    true
+                }
                 _ => false,
             },
             // Can't swap locations until the both related dice have been rolled
-            Prompt::SwapUFOLocations(location_1, location_2) => match other {
-                Prompt::RollUFOLocation(other_location)
+            TimedPhasePrompt::SwapUFOLocations(location_1, location_2) => match other {
+                TimedPhasePrompt::RollUFOLocation(other_location)
                     if other_location == location_1 || other_location == location_2 =>
                 {
                     true
@@ -66,12 +70,12 @@ impl Prompt {
     }
 }
 
-pub fn generate_prompts<R>(
+pub fn generate_timed_phase_prompts<R>(
     round: u32,
     panic: PanicLevel,
     leftover_ufos: u32,
     rng: &mut R,
-) -> Vec<Prompt>
+) -> Vec<TimedPhasePrompt>
 where
     R: Rng,
 {
@@ -84,7 +88,7 @@ where
         PanicLevel::Orange => 5,
         PanicLevel::Red => 4,
     } + random_income_adjustment;
-    let income_prompt = Prompt::TakeIncome(income);
+    let income_prompt = TimedPhasePrompt::TakeIncome(income);
 
     let mut round_continents = Vec::from(ALL_CONTINENTS.clone());
     round_continents.shuffle(rng);
@@ -94,52 +98,64 @@ where
         round_continents.remove(2);
     }
 
-    let mut ufo_prompts: Vec<Prompt> = round_continents
+    let mut ufo_prompts: Vec<TimedPhasePrompt> = round_continents
         .iter()
-        .map(|continent| Prompt::RollUFOLocation(continent.clone()))
+        .map(|continent| TimedPhasePrompt::RollUFOLocation(continent.clone()))
         .collect();
 
     let mut bonus_ufo_prompts = Vec::new();
     if round > 0 {
-        bonus_ufo_prompts.push(Prompt::AddUFOsToLocation(random_continent(rng), 2));
+        bonus_ufo_prompts.push(TimedPhasePrompt::AddUFOsToLocation(
+            random_continent(rng),
+            2,
+        ));
     }
     if round > 1 {
         round_continents.shuffle(rng);
-        bonus_ufo_prompts.push(Prompt::SwapUFOLocations(
+        bonus_ufo_prompts.push(TimedPhasePrompt::SwapUFOLocations(
             round_continents[0].clone(),
             round_continents[1].clone(),
         ));
     }
     if round > 2 {
-        bonus_ufo_prompts.push(Prompt::AddUFOsToLocation(random_continent(rng), 1));
+        bonus_ufo_prompts.push(TimedPhasePrompt::AddUFOsToLocation(
+            random_continent(rng),
+            1,
+        ));
     }
     if round > 3 {
-        bonus_ufo_prompts.push(Prompt::AddUFOsToLocation(random_continent(rng), 1));
+        bonus_ufo_prompts.push(TimedPhasePrompt::AddUFOsToLocation(
+            random_continent(rng),
+            1,
+        ));
     }
     if round > 4 {
         round_continents.shuffle(rng);
-        bonus_ufo_prompts.push(Prompt::SwapUFOLocations(
+        bonus_ufo_prompts.push(TimedPhasePrompt::SwapUFOLocations(
             round_continents[0].clone(),
             round_continents[1].clone(),
         ));
     }
     if round == 4 {
-        bonus_ufo_prompts.push(Prompt::AlienBaseDiscovered(random_continent(rng)));
+        bonus_ufo_prompts.push(TimedPhasePrompt::AlienBaseDiscovered(random_continent(rng)));
     }
     if round > 5 {
-        bonus_ufo_prompts.push(Prompt::AddUFOsToLocation(random_continent(rng), 2));
+        bonus_ufo_prompts.push(TimedPhasePrompt::AddUFOsToLocation(
+            random_continent(rng),
+            2,
+        ));
     }
     if round > 6 {
         round_continents.shuffle(rng);
-        bonus_ufo_prompts.push(Prompt::SwapUFOLocations(
+        bonus_ufo_prompts.push(TimedPhasePrompt::SwapUFOLocations(
             round_continents[0].clone(),
             round_continents[1].clone(),
         ));
     }
 
-    let mut assign_interceptor_prompts: Vec<Prompt> = ALL_CONTINENTS
+    let mut assign_interceptor_prompts: Vec<TimedPhasePrompt> = ALL_CONTINENTS
         .iter()
-        .map(|continent| Prompt::AssignInterceptors(continent.clone()))
+        .map(|continent| TimedPhasePrompt::AssignInterceptors(continent.clone()))
         .collect();
 
     let mut prompts = Vec::new();
@@ -147,7 +163,7 @@ where
     prompts.append(&mut ufo_prompts);
     prompts.append(&mut bonus_ufo_prompts);
     prompts.append(&mut assign_interceptor_prompts);
-    prompts.push(Prompt::ChooseResearch);
+    prompts.push(TimedPhasePrompt::ChooseResearch);
 
     let num_shifts = match leftover_ufos {
         0 => 0,
@@ -190,14 +206,14 @@ mod test {
     use super::*;
     use test_case::test_case;
 
-    #[test_case((Prompt::AssignInterceptors(Continent::Africa), Prompt::RollUFOLocation(Continent::Africa)),  true)]
-    #[test_case((Prompt::AssignInterceptors(Continent::Africa), Prompt::RollUFOLocation(Continent::Eurasia)),  false)]
-    #[test_case((Prompt::AddUFOsToLocation(Continent::Africa, 2), Prompt::RollUFOLocation(Continent::Africa)),  true)]
-    #[test_case((Prompt::AddUFOsToLocation(Continent::Africa, 2), Prompt::RollUFOLocation(Continent::Eurasia)),  false)]
-    #[test_case((Prompt::SwapUFOLocations(Continent::Africa, Continent::Eurasia), Prompt::RollUFOLocation(Continent::Eurasia)),  true)]
-    #[test_case((Prompt::SwapUFOLocations(Continent::Africa, Continent::Eurasia), Prompt::RollUFOLocation(Continent::Africa)),  true)]
-    #[test_case((Prompt::SwapUFOLocations(Continent::Africa, Continent::America), Prompt::RollUFOLocation(Continent::Eurasia)),  false)]
-    fn succession_rules_test(prompts: (Prompt, Prompt), expected: bool) {
+    #[test_case((TimedPhasePrompt::AssignInterceptors(Continent::Africa), TimedPhasePrompt::RollUFOLocation(Continent::Africa)),  true)]
+    #[test_case((TimedPhasePrompt::AssignInterceptors(Continent::Africa), TimedPhasePrompt::RollUFOLocation(Continent::Eurasia)),  false)]
+    #[test_case((TimedPhasePrompt::AddUFOsToLocation(Continent::Africa, 2), TimedPhasePrompt::RollUFOLocation(Continent::Africa)),  true)]
+    #[test_case((TimedPhasePrompt::AddUFOsToLocation(Continent::Africa, 2), TimedPhasePrompt::RollUFOLocation(Continent::Eurasia)),  false)]
+    #[test_case((TimedPhasePrompt::SwapUFOLocations(Continent::Africa, Continent::Eurasia), TimedPhasePrompt::RollUFOLocation(Continent::Eurasia)),  true)]
+    #[test_case((TimedPhasePrompt::SwapUFOLocations(Continent::Africa, Continent::Eurasia), TimedPhasePrompt::RollUFOLocation(Continent::Africa)),  true)]
+    #[test_case((TimedPhasePrompt::SwapUFOLocations(Continent::Africa, Continent::America), TimedPhasePrompt::RollUFOLocation(Continent::Eurasia)),  false)]
+    fn succession_rules_test(prompts: (TimedPhasePrompt, TimedPhasePrompt), expected: bool) {
         assert_eq!(expected, prompts.0.must_come_after(&prompts.1));
     }
 }
