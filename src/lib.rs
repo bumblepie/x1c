@@ -72,8 +72,9 @@ impl TimedPhasePrompt {
 
 pub fn generate_timed_phase_prompts<R>(
     round: u32,
-    panic: PanicLevel,
+    panic: &PanicLevel,
     leftover_ufos: u32,
+    discover_alien_base: bool,
     rng: &mut R,
 ) -> Vec<TimedPhasePrompt>
 where
@@ -94,7 +95,7 @@ where
     round_continents.shuffle(rng);
 
     // First and second rounds only roll 2 dice
-    if round < 2 {
+    if round < 3 {
         round_continents.remove(2);
     }
 
@@ -104,53 +105,54 @@ where
         .collect();
 
     let mut bonus_ufo_prompts = Vec::new();
-    if round > 0 {
+    if round >= 2 {
         bonus_ufo_prompts.push(TimedPhasePrompt::AddUFOsToLocation(
             random_continent(rng),
             2,
         ));
     }
-    if round > 1 {
+    if round >= 3 {
         round_continents.shuffle(rng);
         bonus_ufo_prompts.push(TimedPhasePrompt::SwapUFOLocations(
             round_continents[0].clone(),
             round_continents[1].clone(),
         ));
     }
-    if round > 2 {
+    if round >= 4 {
         bonus_ufo_prompts.push(TimedPhasePrompt::AddUFOsToLocation(
             random_continent(rng),
             1,
         ));
     }
-    if round > 3 {
+    if round >= 5 {
         bonus_ufo_prompts.push(TimedPhasePrompt::AddUFOsToLocation(
             random_continent(rng),
             1,
         ));
     }
-    if round > 4 {
+    if round >= 6 {
         round_continents.shuffle(rng);
         bonus_ufo_prompts.push(TimedPhasePrompt::SwapUFOLocations(
             round_continents[0].clone(),
             round_continents[1].clone(),
         ));
     }
-    if round == 4 {
+    if round >= 7 {
+        bonus_ufo_prompts.push(TimedPhasePrompt::AddUFOsToLocation(
+            random_continent(rng),
+            2,
+        ));
+    }
+    if round >= 8 {
+        round_continents.shuffle(rng);
+        bonus_ufo_prompts.push(TimedPhasePrompt::SwapUFOLocations(
+            round_continents[0].clone(),
+            round_continents[1].clone(),
+        ));
+    }
+
+    if discover_alien_base {
         bonus_ufo_prompts.push(TimedPhasePrompt::AlienBaseDiscovered(random_continent(rng)));
-    }
-    if round > 5 {
-        bonus_ufo_prompts.push(TimedPhasePrompt::AddUFOsToLocation(
-            random_continent(rng),
-            2,
-        ));
-    }
-    if round > 6 {
-        round_continents.shuffle(rng);
-        bonus_ufo_prompts.push(TimedPhasePrompt::SwapUFOLocations(
-            round_continents[0].clone(),
-            round_continents[1].clone(),
-        ));
     }
 
     let mut assign_interceptor_prompts: Vec<TimedPhasePrompt> = ALL_CONTINENTS
@@ -166,7 +168,7 @@ where
     prompts.push(TimedPhasePrompt::ChooseResearch);
 
     let num_shifts = match leftover_ufos {
-        0 => 0,
+        n if n < 1 => 0,
         n if n < 2 => 3,
 
         n if n < 4 => 5,
@@ -199,6 +201,56 @@ where
         }
     }
     return prompts;
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ResolutionPhasePrompt {
+    AuditSpending,
+    ResolveResearch,
+    ResolveUFODefense,
+    IncreasePanic,
+    AskForBoardState,
+    ResolveContinentBonuses,
+    CleanUp,
+    PurchaseReplacementForces,
+}
+
+impl ResolutionPhasePrompt {
+    pub fn start() -> Self {
+        Self::AuditSpending
+    }
+
+    pub fn next(&self) -> Option<Self> {
+        match self {
+            Self::AuditSpending => Some(Self::ResolveResearch),
+            Self::ResolveResearch => Some(Self::ResolveUFODefense),
+            Self::ResolveUFODefense => Some(Self::IncreasePanic),
+            Self::IncreasePanic => Some(Self::AskForBoardState),
+            Self::AskForBoardState => Some(Self::ResolveContinentBonuses),
+            Self::ResolveContinentBonuses => Some(Self::CleanUp),
+            Self::CleanUp => Some(Self::PurchaseReplacementForces),
+            Self::PurchaseReplacementForces => None,
+        }
+    }
+
+    pub fn prev(&self) -> Option<Self> {
+        match self {
+            Self::AuditSpending => None,
+            Self::ResolveResearch => Some(Self::AuditSpending),
+            Self::ResolveUFODefense => Some(Self::ResolveResearch),
+            Self::IncreasePanic => Some(Self::ResolveUFODefense),
+            Self::AskForBoardState => Some(Self::IncreasePanic),
+            Self::ResolveContinentBonuses => Some(Self::AskForBoardState),
+            Self::CleanUp => Some(Self::ResolveContinentBonuses),
+            Self::PurchaseReplacementForces => Some(Self::CleanUp),
+        }
+    }
+}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum GameResult {
+    Victory,
+    PyrrhicVictory,
+    Defeat,
 }
 
 #[cfg(test)]
