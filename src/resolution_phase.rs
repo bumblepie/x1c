@@ -1,5 +1,8 @@
-use xcom_1_card::{PanicLevel, ResolutionPhasePrompt};
-use yew::{html, Callback, ChangeData, Component, ComponentLink, Properties};
+use xcom_1_card::{GameResult, PanicLevel, ResolutionPhasePrompt};
+use yew::{
+    html, web_sys::HtmlInputElement, Callback, ChangeData, Component, ComponentLink, NodeRef,
+    Properties,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PanicLevelInput {
@@ -40,6 +43,7 @@ pub struct ResolutionPhase {
     ufos_left_input: u32,
     alien_base_destroyed_input: bool,
     link: ComponentLink<Self>,
+    alien_base_destroyed_checkbox: NodeRef,
     props: Props,
 }
 
@@ -49,6 +53,7 @@ pub enum Msg {
     UpdatePanicLevel(PanicLevelInput),
     UpdateUfosLeft(u32),
     UpdateAlienBaseDestroyed(bool),
+    CheckGameEnd,
 }
 
 #[derive(Debug, Clone, PartialEq, Properties)]
@@ -57,6 +62,7 @@ pub struct Props {
     pub ufos_left: u32,
     pub alien_base_discovered: bool,
     pub on_completed: Callback<(PanicLevel, u32)>,
+    pub on_game_end: Callback<GameResult>,
 }
 
 impl Component for ResolutionPhase {
@@ -70,6 +76,7 @@ impl Component for ResolutionPhase {
             panic_level_input: PanicLevelInput::PanicLevel(props.panic_level.clone()),
             ufos_left_input: props.ufos_left,
             alien_base_destroyed_input: false,
+            alien_base_destroyed_checkbox: NodeRef::default(),
             link,
             props,
         }
@@ -110,6 +117,24 @@ impl Component for ResolutionPhase {
                 self.alien_base_destroyed_input = alien_base_destroyed;
                 false
             }
+            Msg::CheckGameEnd => {
+                match (
+                    self.alien_base_destroyed_input,
+                    self.panic_level_input.clone(),
+                ) {
+                    (true, PanicLevelInput::PanicLevel(_)) => {
+                        self.props.on_game_end.emit(GameResult::Victory)
+                    }
+                    (true, PanicLevelInput::AlienSpace) => {
+                        self.props.on_game_end.emit(GameResult::PyrrhicVictory)
+                    }
+                    (false, PanicLevelInput::AlienSpace) => {
+                        self.props.on_game_end.emit(GameResult::Defeat)
+                    }
+                    (false, PanicLevelInput::PanicLevel(_)) => (),
+                }
+                false
+            }
         }
     }
 
@@ -119,6 +144,7 @@ impl Component for ResolutionPhase {
     }
 
     fn view(&self) -> yew::Html {
+        let checkbox_ref = self.alien_base_destroyed_checkbox.clone();
         let main = match self.prompt {
             ResolutionPhasePrompt::AskForBoardState => {
                 let panic_level_num: i32 = self.panic_level_input.clone().into();
@@ -158,25 +184,39 @@ impl Component for ResolutionPhase {
                                 })
                             />
                         </div>
-                        <div>
-                            <input
-                                type="checkbox"
-                                name="alien_base_destroyed_input"
-                                onchange=self.link.batch_callback(|c: ChangeData| {
-                                    if let ChangeData::Value(val) = c {
-                                        if let Ok(val) = val.parse::<bool>() {
-                                            return vec![Msg::UpdateAlienBaseDestroyed(val)]
-                                        }
-                                    }
-                                    return vec![];
-                                })
-                            />
-                            <label for="alien_base_destroyed_input">{ "Alien base destroyed?" }</label>
-                        </div>
+                        {
+                            if self.props.alien_base_discovered {
+                            html!{
+                                <div>
+                                    <input
+                                        type="checkbox"
+                                        name="alien_base_destroyed_input"
+                                        ref=self.alien_base_destroyed_checkbox.clone()
+                                        checked=self.alien_base_destroyed_input
+                                        onchange=self.link.batch_callback(move |_: ChangeData| {
+                                            if let Some(input_element) = checkbox_ref.cast::<HtmlInputElement>() {
+                                                return vec![Msg::UpdateAlienBaseDestroyed(input_element.checked())];
+                                            }
+                                            return vec![];
+                                        })
+                                    />
+                                    <label for="alien_base_destroyed_input">{ "Alien base destroyed?" }</label>
+                                </div>
+                                }
+                            } else {
+                                html!{}
+                            }
+                        }
                     </>
                 }
             }
             _ => html! {},
+        };
+        let next_callback = match self.prompt {
+            ResolutionPhasePrompt::AskForBoardState => self
+                .link
+                .batch_callback(|_| vec![Msg::CheckGameEnd, Msg::NextPrompt]),
+            _ => self.link.callback(|_| Msg::NextPrompt),
         };
         html! {
             <>
@@ -186,7 +226,7 @@ impl Component for ResolutionPhase {
                 </div>
                 <div>
                     <button onclick=self.link.callback(|_| Msg::PreviousPrompt)>{ "Prev" }</button>
-                    <button onclick=self.link.callback(|_| Msg::NextPrompt)>{ "Next" }</button>
+                    <button onclick=next_callback>{ "Next" }</button>
                 </div>
             </>
         }

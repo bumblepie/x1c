@@ -5,7 +5,7 @@ use resolution_phase::ResolutionPhase;
 use timed_phase::TimedPhase;
 
 use rand::thread_rng;
-use xcom_1_card::{generate_timed_phase_prompts, PanicLevel, TimedPhasePrompt};
+use xcom_1_card::{generate_timed_phase_prompts, GameResult, PanicLevel, TimedPhasePrompt};
 use yew::prelude::*;
 
 enum Msg {
@@ -16,6 +16,7 @@ enum Msg {
         panic_level: PanicLevel,
         ufos_left: u32,
     },
+    GameCompleted(GameResult),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -36,6 +37,7 @@ enum Phase {
     PrepareForTimedPhase,
     TimedPhase(Vec<TimedPhasePrompt>),
     ResolutionPhase,
+    GameCompleted(GameResult),
 }
 
 impl Component for Model {
@@ -99,6 +101,10 @@ impl Component for Model {
                 }
                 _ => false,
             },
+            Msg::GameCompleted(result) => {
+                self.phase = Phase::GameCompleted(result);
+                true
+            }
         }
     }
 
@@ -139,8 +145,12 @@ impl Component for Model {
                                         panic_level,
                                         ufos_left,
                                     })
+                                    on_game_end=self.link.callback(|result| Msg::GameCompleted(result))
                                 />
                             }
+                        }
+                        Phase::GameCompleted(ref result) => {
+                            html!{<p>{ format!("{:?}", result) }</p>}
                         }
                     }
                 }
@@ -151,5 +161,6 @@ impl Component for Model {
 }
 
 fn main() {
+    wasm_logger::init(wasm_logger::Config::default());
     yew::start_app::<Model>();
 }
