@@ -12,10 +12,11 @@ pub struct TimedPhase {
     props: TimedPhaseProps,
 }
 
-#[derive(Properties, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Properties)]
 pub struct TimedPhaseProps {
     pub prompts: Vec<TimedPhasePrompt>,
-    pub completed_callback: Callback<()>,
+    pub on_completed: Callback<MouseEvent>,
+    pub on_alien_base_discovered: Callback<()>,
 }
 
 impl Component for TimedPhase {
@@ -33,10 +34,13 @@ impl Component for TimedPhase {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::NextPrompt => {
-                if (self.current_prompt_index + 1) >= self.props.prompts.len() {
-                    self.props.completed_callback.emit(());
-                }
-                if (self.current_prompt_index + 1) < self.props.prompts.len() {
+                if (self.current_prompt_index + 1) <= self.props.prompts.len() {
+                    if matches!(
+                        self.props.prompts[self.current_prompt_index],
+                        TimedPhasePrompt::AlienBaseDiscovered(_)
+                    ) {
+                        self.props.on_alien_base_discovered.emit(());
+                    }
                     self.current_prompt_index += 1;
                     true
                 } else {
@@ -66,9 +70,22 @@ impl Component for TimedPhase {
     fn view(&self) -> Html {
         html! {
             <div>
-                <button onclick=self.link.callback(|_| Msg::PreviousPrompt)>{ "Prev" }</button>
-                <button onclick=self.link.callback(|_| Msg::NextPrompt)>{ "Next" }</button>
-                <p>{ format!("{:?}", self.props.prompts[self.current_prompt_index]) }</p>
+                {
+                    if self.current_prompt_index == self.props.prompts.len() {
+                        html!{
+                            <>
+                                <p>{ "Completing timed phase" }</p>
+                                <button onclick=self.props.on_completed.clone()>{ "Complete timed phase" }</button>
+                            </>
+                        }
+                    } else {
+                        html!{ <p>{ format!("{:?}", self.props.prompts[self.current_prompt_index]) }</p>}
+                    }
+                }
+                <div>
+                    <button onclick=self.link.callback(|_| Msg::PreviousPrompt)>{ "Prev" }</button>
+                    <button onclick=self.link.callback(|_| Msg::NextPrompt)>{ "Next" }</button>
+                </div>
             </div>
         }
     }
