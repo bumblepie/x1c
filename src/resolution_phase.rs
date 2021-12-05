@@ -39,12 +39,14 @@ impl TryFrom<i32> for PanicLevelInput {
 
 pub struct ResolutionPhase {
     prompt: ResolutionPhasePrompt,
+    alien_base_discovered: bool,
     panic_level_input: PanicLevelInput,
     ufos_left_input: u32,
     alien_base_destroyed_input: bool,
     link: ComponentLink<Self>,
     alien_base_destroyed_checkbox: NodeRef,
-    props: Props,
+    on_completed: Callback<(PanicLevel, u32)>,
+    on_game_end: Callback<GameResult>,
 }
 
 pub enum Msg {
@@ -63,6 +65,8 @@ pub struct Props {
     pub alien_base_discovered: bool,
     pub on_completed: Callback<(PanicLevel, u32)>,
     pub on_game_end: Callback<GameResult>,
+    #[prop_or_else(ResolutionPhasePrompt::start)]
+    pub starting_prompt: ResolutionPhasePrompt,
 }
 
 impl Component for ResolutionPhase {
@@ -72,13 +76,15 @@ impl Component for ResolutionPhase {
 
     fn create(props: Self::Properties, link: yew::ComponentLink<Self>) -> Self {
         Self {
-            prompt: ResolutionPhasePrompt::start(),
+            prompt: props.starting_prompt,
+            alien_base_discovered: props.alien_base_discovered,
             panic_level_input: PanicLevelInput::PanicLevel(props.panic_level.clone()),
             ufos_left_input: props.ufos_left,
             alien_base_destroyed_input: false,
             alien_base_destroyed_checkbox: NodeRef::default(),
             link,
-            props,
+            on_completed: props.on_completed,
+            on_game_end: props.on_game_end,
         }
     }
 
@@ -90,7 +96,7 @@ impl Component for ResolutionPhase {
                     true
                 } else {
                     if let PanicLevelInput::PanicLevel(level) = self.panic_level_input.clone() {
-                        self.props.on_completed.emit((level, self.ufos_left_input));
+                        self.on_completed.emit((level, self.ufos_left_input));
                         false
                     } else {
                         false
@@ -123,13 +129,13 @@ impl Component for ResolutionPhase {
                     self.panic_level_input.clone(),
                 ) {
                     (true, PanicLevelInput::PanicLevel(_)) => {
-                        self.props.on_game_end.emit(GameResult::Victory)
+                        self.on_game_end.emit(GameResult::Victory)
                     }
                     (true, PanicLevelInput::AlienSpace) => {
-                        self.props.on_game_end.emit(GameResult::PyrrhicVictory)
+                        self.on_game_end.emit(GameResult::PyrrhicVictory)
                     }
                     (false, PanicLevelInput::AlienSpace) => {
-                        self.props.on_game_end.emit(GameResult::Defeat)
+                        self.on_game_end.emit(GameResult::Defeat)
                     }
                     (false, PanicLevelInput::PanicLevel(_)) => (),
                 }
@@ -139,8 +145,13 @@ impl Component for ResolutionPhase {
     }
 
     fn change(&mut self, props: Self::Properties) -> yew::ShouldRender {
-        self.props = props;
-        false
+        self.prompt = props.starting_prompt;
+        self.alien_base_discovered = props.alien_base_discovered;
+        self.panic_level_input = PanicLevelInput::PanicLevel(props.panic_level.clone());
+        self.ufos_left_input = props.ufos_left;
+        self.on_completed = props.on_completed;
+        self.on_game_end = props.on_game_end;
+        true
     }
 
     fn view(&self) -> yew::Html {
@@ -185,7 +196,7 @@ impl Component for ResolutionPhase {
                             />
                         </div>
                         {
-                            if self.props.alien_base_discovered {
+                            if self.alien_base_discovered {
                             html!{
                                 <div>
                                     <input

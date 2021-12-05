@@ -5,7 +5,9 @@ use resolution_phase::ResolutionPhase;
 use timed_phase::TimedPhase;
 
 use rand::thread_rng;
-use xcom_1_card::{generate_timed_phase_prompts, GameResult, PanicLevel, TimedPhasePrompt};
+use xcom_1_card::{
+    generate_timed_phase_prompts, GameResult, PanicLevel, ResolutionPhasePrompt, TimedPhasePrompt,
+};
 use yew::prelude::*;
 
 enum Msg {
@@ -17,6 +19,7 @@ enum Msg {
         ufos_left: u32,
     },
     GameCompleted(GameResult),
+    UndoGameCompleted,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -30,6 +33,7 @@ struct GameState {
 struct Model {
     phase: Phase,
     game_state: GameState,
+    resolution_phase_starting_prompt: ResolutionPhasePrompt,
     link: ComponentLink<Self>,
 }
 enum Phase {
@@ -54,6 +58,7 @@ impl Component for Model {
                 panic_level: PanicLevel::Yellow,
                 ufos_left: 0,
             },
+            resolution_phase_starting_prompt: ResolutionPhasePrompt::start(),
             link,
         }
     }
@@ -80,6 +85,7 @@ impl Component for Model {
             }
             Msg::TimedPhaseCompleted => match self.phase {
                 Phase::TimedPhase(_) => {
+                    self.resolution_phase_starting_prompt = ResolutionPhasePrompt::start();
                     self.phase = Phase::ResolutionPhase;
                     true
                 }
@@ -103,6 +109,11 @@ impl Component for Model {
             },
             Msg::GameCompleted(result) => {
                 self.phase = Phase::GameCompleted(result);
+                true
+            }
+            Msg::UndoGameCompleted => {
+                self.phase = Phase::ResolutionPhase;
+                self.resolution_phase_starting_prompt = ResolutionPhasePrompt::AskForBoardState;
                 true
             }
         }
@@ -134,10 +145,11 @@ impl Component for Model {
                                     on_alien_base_discovered=self.link.callback(|_| Msg::AlienBaseDiscovered)
                                 />
                             }
-                        }
+                        },
                         Phase::ResolutionPhase => {
                             html! {
                                 <ResolutionPhase
+                                    starting_prompt=self.resolution_phase_starting_prompt.clone()
                                     panic_level=self.game_state.panic_level.clone()
                                     ufos_left=self.game_state.ufos_left
                                     alien_base_discovered=self.game_state.alien_base_discovered
@@ -148,10 +160,15 @@ impl Component for Model {
                                     on_game_end=self.link.callback(|result| Msg::GameCompleted(result))
                                 />
                             }
-                        }
+                        },
                         Phase::GameCompleted(ref result) => {
-                            html!{<p>{ format!("{:?}", result) }</p>}
-                        }
+                            html!{
+                                <div>
+                                <p>{ format!("{:?}", result) }</p>
+                                <button onclick=self.link.callback(|_| Msg::UndoGameCompleted) >{ "Back" }</button>
+                                </div>
+                            }
+                        },
                     }
                 }
                 <p>{ format!("{:?}", self.game_state) }</p>
