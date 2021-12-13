@@ -13,6 +13,7 @@ use yew::prelude::*;
 enum Msg {
     EnterTimedPhase,
     TimedPhaseCompleted,
+    EnterResolutionPhase,
     AlienBaseDiscovered,
     ResolutionPhaseCompleted {
         panic_level: PanicLevel,
@@ -37,9 +38,11 @@ struct Model {
     link: ComponentLink<Self>,
 }
 enum Phase {
+    // MainMenu,
     // Setup,
     PrepareForTimedPhase,
     TimedPhase(Vec<TimedPhasePrompt>),
+    PrepareForResolutionPhase,
     ResolutionPhase,
     GameCompleted(GameResult),
 }
@@ -83,14 +86,15 @@ impl Component for Model {
                 self.game_state.alien_base_discovered = true;
                 false
             }
-            Msg::TimedPhaseCompleted => match self.phase {
-                Phase::TimedPhase(_) => {
-                    self.resolution_phase_starting_prompt = ResolutionPhasePrompt::start();
-                    self.phase = Phase::ResolutionPhase;
-                    true
-                }
-                _ => false,
-            },
+            Msg::TimedPhaseCompleted => {
+                self.phase = Phase::PrepareForResolutionPhase;
+                true
+            }
+            Msg::EnterResolutionPhase => {
+                self.resolution_phase_starting_prompt = ResolutionPhasePrompt::start();
+                self.phase = Phase::ResolutionPhase;
+                true
+            }
             Msg::ResolutionPhaseCompleted {
                 panic_level,
                 ufos_left,
@@ -125,15 +129,17 @@ impl Component for Model {
 
     fn view(&self) -> Html {
         html! {
-            <div>
-                <p> { format!("Round {}", self.game_state.round) }</p>
+            <div class="main">
+                // <div>
+                //     <p> { format!("Round {}", self.game_state.round) }</p>
+                // </div>
                 {
                     match self.phase {
                         Phase::PrepareForTimedPhase => {
                             html! {
-                                <div>
-                                    <p>{ "Prepare for Timed Phase" }</p>
-                                    <button onclick=self.link.callback(|_| Msg::EnterTimedPhase)> {"Enter Timed Phase"}</button>
+                                <div class="background-image prepare-screen" style="background-image: url(assets/background-art/ufos-with-sunset.png)">
+                                    <div class="prepare-screen-text">{ "Prepare for Timed Phase" }</div>
+                                    <button class="prepare-screen-button" onclick=self.link.callback(|_| Msg::EnterTimedPhase)> {"Enter Timed Phase"}</button>
                                 </div>
                             }
                         }
@@ -146,6 +152,15 @@ impl Component for Model {
                                 />
                             }
                         },
+                        Phase::PrepareForResolutionPhase => {
+                            html! {
+
+                                <div class="background-image prepare-screen" style="background-image: url(assets/background-art/ufos-over-city.png)">
+                                    <div class="prepare-screen-text">{ "Prepare for Resolution Phase" }</div>
+                                    <button class="prepare-screen-button" onclick=self.link.callback(|_| Msg::EnterResolutionPhase)> {"Enter Resolution Phase"}</button>
+                                </div>
+                            }
+                        }
                         Phase::ResolutionPhase => {
                             html! {
                                 <ResolutionPhase
@@ -163,15 +178,17 @@ impl Component for Model {
                         },
                         Phase::GameCompleted(ref result) => {
                             html!{
-                                <div>
-                                <p>{ format!("{:?}", result) }</p>
-                                <button onclick=self.link.callback(|_| Msg::UndoGameCompleted) >{ "Back" }</button>
+                                <div class="prepare-screen">
+                                    <p>{ format!("{:?}", result) }</p>
+                                    <button onclick=self.link.callback(|_| Msg::UndoGameCompleted) >{ "Back" }</button>
                                 </div>
                             }
                         },
                     }
                 }
-                <p>{ format!("{:?}", self.game_state) }</p>
+                // <div>
+                //     <p>{ format!("{:?}", self.game_state) }</p>
+                // </div>
             </div>
         }
     }

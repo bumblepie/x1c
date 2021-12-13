@@ -1,7 +1,8 @@
 use xcom_1_card::{GameResult, PanicLevel, ResolutionPhasePrompt};
 use yew::{
-    html, web_sys::HtmlInputElement, Callback, ChangeData, Component, ComponentLink, NodeRef,
-    Properties,
+    html,
+    web_sys::{Element, HtmlInputElement},
+    Callback, ChangeData, Component, ComponentLink, Html, NodeRef, Properties,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -10,29 +11,30 @@ pub enum PanicLevelInput {
     AlienSpace,
 }
 
-impl Into<i32> for PanicLevelInput {
-    fn into(self) -> i32 {
+impl Into<String> for PanicLevelInput {
+    fn into(self) -> String {
         match self {
-            PanicLevelInput::PanicLevel(PanicLevel::Yellow) => 0,
-            PanicLevelInput::PanicLevel(PanicLevel::Orange) => 1,
-            PanicLevelInput::PanicLevel(PanicLevel::Red) => 2,
-            PanicLevelInput::AlienSpace => 3,
+            PanicLevelInput::PanicLevel(PanicLevel::Yellow) => "yellow",
+            PanicLevelInput::PanicLevel(PanicLevel::Orange) => "orange",
+            PanicLevelInput::PanicLevel(PanicLevel::Red) => "red",
+            PanicLevelInput::AlienSpace => "alien",
         }
+        .to_owned()
     }
 }
 
-pub struct InvalidPanicLevelNum;
+pub struct InvalidPanicLevelString;
 
-impl TryFrom<i32> for PanicLevelInput {
-    type Error = InvalidPanicLevelNum;
+impl TryFrom<&str> for PanicLevelInput {
+    type Error = InvalidPanicLevelString;
 
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(PanicLevelInput::PanicLevel(PanicLevel::Yellow)),
-            1 => Ok(PanicLevelInput::PanicLevel(PanicLevel::Orange)),
-            2 => Ok(PanicLevelInput::PanicLevel(PanicLevel::Red)),
-            3 => Ok(PanicLevelInput::AlienSpace),
-            _ => Err(InvalidPanicLevelNum),
+            "yellow" => Ok(PanicLevelInput::PanicLevel(PanicLevel::Yellow)),
+            "orange" => Ok(PanicLevelInput::PanicLevel(PanicLevel::Orange)),
+            "red" => Ok(PanicLevelInput::PanicLevel(PanicLevel::Red)),
+            "alien" => Ok(PanicLevelInput::AlienSpace),
+            _ => Err(InvalidPanicLevelString),
         }
     }
 }
@@ -44,7 +46,8 @@ pub struct ResolutionPhase {
     ufos_left_input: u32,
     alien_base_destroyed_input: bool,
     link: ComponentLink<Self>,
-    alien_base_destroyed_checkbox: NodeRef,
+    alien_base_destroyed_checkbox_ref: NodeRef,
+    prompt_details_ref: NodeRef,
     on_completed: Callback<(PanicLevel, u32)>,
     on_game_end: Callback<GameResult>,
 }
@@ -53,7 +56,8 @@ pub enum Msg {
     NextPrompt,
     PreviousPrompt,
     UpdatePanicLevel(PanicLevelInput),
-    UpdateUfosLeft(u32),
+    IncreaseUFOsLeft,
+    DecreaseUFOsLeft,
     UpdateAlienBaseDestroyed(bool),
     CheckGameEnd,
 }
@@ -81,7 +85,8 @@ impl Component for ResolutionPhase {
             panic_level_input: PanicLevelInput::PanicLevel(props.panic_level.clone()),
             ufos_left_input: props.ufos_left,
             alien_base_destroyed_input: false,
-            alien_base_destroyed_checkbox: NodeRef::default(),
+            alien_base_destroyed_checkbox_ref: NodeRef::default(),
+            prompt_details_ref: NodeRef::default(),
             link,
             on_completed: props.on_completed,
             on_game_end: props.on_game_end,
@@ -93,6 +98,9 @@ impl Component for ResolutionPhase {
             Msg::NextPrompt => {
                 if let Some(next_prompt) = self.prompt.next() {
                     self.prompt = next_prompt;
+                    if let Some(element) = self.prompt_details_ref.cast::<Element>() {
+                        element.scroll_to_with_x_and_y(0.0, 0.0);
+                    }
                     true
                 } else {
                     if let PanicLevelInput::PanicLevel(level) = self.panic_level_input.clone() {
@@ -106,6 +114,9 @@ impl Component for ResolutionPhase {
             Msg::PreviousPrompt => {
                 if let Some(prev_prompt) = self.prompt.prev() {
                     self.prompt = prev_prompt;
+                    if let Some(element) = self.prompt_details_ref.cast::<Element>() {
+                        element.scroll_to_with_x_and_y(0.0, 0.0);
+                    }
                     true
                 } else {
                     false
@@ -115,9 +126,17 @@ impl Component for ResolutionPhase {
                 self.panic_level_input = panic_level_input;
                 false
             }
-            Msg::UpdateUfosLeft(ufos_left) => {
-                self.ufos_left_input = ufos_left;
-                false
+            Msg::IncreaseUFOsLeft => {
+                if self.ufos_left_input < 18 {
+                    self.ufos_left_input += 1;
+                }
+                true
+            }
+            Msg::DecreaseUFOsLeft => {
+                if self.ufos_left_input > 0 {
+                    self.ufos_left_input -= 1;
+                }
+                true
             }
             Msg::UpdateAlienBaseDestroyed(alien_base_destroyed) => {
                 self.alien_base_destroyed_input = alien_base_destroyed;
@@ -155,54 +174,66 @@ impl Component for ResolutionPhase {
     }
 
     fn view(&self) -> yew::Html {
-        let checkbox_ref = self.alien_base_destroyed_checkbox.clone();
-        let main = match self.prompt {
+        let checkbox_ref = self.alien_base_destroyed_checkbox_ref.clone();
+        let panic_input_change_callback = self.link.batch_callback(|c: ChangeData| {
+            if let ChangeData::Value(val) = c {
+                if let Ok(panic_level_input) = PanicLevelInput::try_from(val.as_str()) {
+                    return vec![Msg::UpdatePanicLevel(panic_level_input)];
+                }
+            }
+            return vec![];
+        });
+        let main_section = match self.prompt {
             ResolutionPhasePrompt::AskForBoardState => {
-                let panic_level_num: i32 = self.panic_level_input.clone().into();
+                let current_panic_level: String = self.panic_level_input.clone().into();
                 html! {
-                    <>
+                    <div class="board-input-container">
                         <div>
-                            <p>{ "Global panic level:"} </p>
-                            <input
-                                type="range"
-                                min="0" max="3" step="1"
-                                value=format!("{}", panic_level_num)
-                                onchange=self.link.batch_callback(|c: ChangeData| {
-                                    if let ChangeData::Value(val) = c {
-                                        if let Ok(val) = val.parse::<i32>() {
-                                            if let Ok(panic_level_input) = PanicLevelInput::try_from(val) {
-                                                return vec![Msg::UpdatePanicLevel(panic_level_input)]
-                                            }
-                                        }
-                                    }
-                                    return vec![];
-                                })
-                            />
+                            <div class="board-input-title">{ "Global panic level:"} </div>
+                            <div class="panic-input-container">
+                            {
+                                vec!["yellow", "orange", "red", "alien"].into_iter()
+                                    .map(|input| html!{
+                                        <>
+                                            <input
+                                                class="panic-input-radio"
+                                                type="radio"
+                                                id=format!("panic-{}", input)
+                                                name="panic-input"
+                                                value=input
+                                                onchange=panic_input_change_callback.clone()
+                                                checked=input == current_panic_level
+                                            />
+                                            <label
+                                                class="panic-input-label"
+                                                for=format!("panic-{}", input)
+                                            >
+                                                <img src=format!("assets/icons/panic-input-{}.png", input)/>
+                                            </label>
+                                        </>
+                                    })
+                                    .collect::<Html>()
+                            }
+                            </div>
                         </div>
                         <div>
-                            <p>{ "UFOs left on map:"} </p>
-                            <input
-                                type="number"
-                                min="0" max="18" step="1"
-                                value=format!("{}", self.ufos_left_input)
-                                onchange=self.link.batch_callback(|c: ChangeData| {
-                                    if let ChangeData::Value(val) = c {
-                                        if let Ok(val) = val.parse::<u32>() {
-                                            return vec![Msg::UpdateUfosLeft(val)]
-                                        }
-                                    }
-                                    return vec![];
-                                })
-                            />
+                            <div class="board-input-title">{ "UFOs left on map:"} </div>
+                            <div class="ufo-input-container">
+                                <button class="ufo-input-button" onclick=self.link.callback(|_| Msg::DecreaseUFOsLeft)>{"-"}</button>
+                                <span class="ufo-input-text" >{ self.ufos_left_input }</span>
+                                <button class="ufo-input-button" onclick=self.link.callback(|_| Msg::IncreaseUFOsLeft)>{"+"}</button>
+                            </div>
                         </div>
                         {
                             if self.alien_base_discovered {
                             html!{
-                                <div>
+                                <div class="alien-base-destroyed-input-container">
+                                    <label for="alien_base_destroyed_input">{ "Alien base destroyed?" }</label>
                                     <input
+                                    class="alien-base-destroyed-input-checkbox"
                                         type="checkbox"
                                         name="alien_base_destroyed_input"
-                                        ref=self.alien_base_destroyed_checkbox.clone()
+                                        ref=self.alien_base_destroyed_checkbox_ref.clone()
                                         checked=self.alien_base_destroyed_input
                                         onchange=self.link.batch_callback(move |_: ChangeData| {
                                             if let Some(input_element) = checkbox_ref.cast::<HtmlInputElement>() {
@@ -211,17 +242,32 @@ impl Component for ResolutionPhase {
                                             return vec![];
                                         })
                                     />
-                                    <label for="alien_base_destroyed_input">{ "Alien base destroyed?" }</label>
                                 </div>
                                 }
                             } else {
                                 html!{}
                             }
                         }
-                    </>
+                    </div>
                 }
             }
-            _ => html! {},
+            _ => html! {
+                <>
+                    <h1 class="prompt-title">{ self.prompt.title() }</h1>
+                    <div class="prompt-center-area">
+                        <div class="side-buttons">
+                        </div>
+                        <div class="prompt-details" ref=self.prompt_details_ref.clone()>
+                            <div class="prompt-icons">
+                                {icon_html_for_prompt(&self.prompt)}
+                            </div>
+                            <div class="prompt-description">
+                                {"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            },
         };
         let next_callback = match self.prompt {
             ResolutionPhasePrompt::AskForBoardState => self
@@ -231,15 +277,43 @@ impl Component for ResolutionPhase {
         };
         html! {
             <>
-                <div>
-                    <p>{ format!("{:?}", self.prompt) }</p>
-                    { main }
-                </div>
-                <div>
-                    <button onclick=self.link.callback(|_| Msg::PreviousPrompt)>{ "Prev" }</button>
-                    <button onclick=next_callback>{ "Next" }</button>
+                {main_section}
+                <div class="bottom-panel">
+                    <button class="button-back" onclick=self.link.callback(|_| Msg::PreviousPrompt)>{ "Back" }</button>
+                    <button class="button-done" onclick=next_callback>{ "Done" }</button>
                 </div>
             </>
         }
+    }
+}
+
+fn icon_html_for_prompt(prompt: &ResolutionPhasePrompt) -> Html {
+    match prompt {
+        ResolutionPhasePrompt::AuditSpending => html! {
+            <img class="prompt-icon" src="assets/icons/audit.png"/>
+        },
+        ResolutionPhasePrompt::ResolveResearch => html! {
+            <img class="prompt-icon" src="assets/icons/research.png"/>
+        },
+        ResolutionPhasePrompt::ResolveUFODefense => html! {
+            <img class="prompt-icon" src="assets/icons/interceptor.png"/>
+        },
+        ResolutionPhasePrompt::IncreasePanic => html! {
+            <img class="prompt-icon" src="assets/icons/alien.png"/>
+        },
+        ResolutionPhasePrompt::AskForBoardState => html! {},
+        ResolutionPhasePrompt::ResolveContinentBonuses => html! {
+            <>
+                <img class="prompt-icon" src="assets/icons/america.png"/>
+                <img class="prompt-icon" src="assets/icons/africa.png"/>
+                <img class="prompt-icon" src="assets/icons/eurasia.png"/>
+            </>
+        },
+        ResolutionPhasePrompt::CleanUp => html! {
+            <img class="prompt-icon" src="assets/icons/cleanup.png"/>
+        },
+        ResolutionPhasePrompt::PurchaseReplacementForces => html! {
+            <img class="prompt-icon" src="assets/icons/replenish.png"/>
+        },
     }
 }

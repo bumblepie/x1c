@@ -17,6 +17,17 @@ pub enum Continent {
     Eurasia,
 }
 
+impl Into<String> for &Continent {
+    fn into(self) -> String {
+        match self {
+            Continent::America => "america",
+            Continent::Africa => "africa",
+            Continent::Eurasia => "eurasia",
+        }
+        .to_owned()
+    }
+}
+
 pub const ALL_CONTINENTS: [Continent; 3] =
     [Continent::America, Continent::Africa, Continent::Eurasia];
 
@@ -66,6 +77,26 @@ impl TimedPhasePrompt {
                 _ => false,
             },
             _ => false,
+        }
+    }
+
+    pub fn title(&self) -> String {
+        match self {
+            TimedPhasePrompt::TakeIncome(_) => "Take Income".to_owned(),
+            TimedPhasePrompt::RollUFOLocation(continent) => {
+                format!("UFOs Spotted Over {:?}", continent)
+            }
+            TimedPhasePrompt::AddUFOsToLocation(continent, _) => {
+                format!("More UFOs Spotted Over {:?}", continent)
+            }
+            TimedPhasePrompt::SwapUFOLocations(_, _) => format!("UFOs on the Move"),
+            TimedPhasePrompt::ChooseResearch => "Choose Research".to_owned(),
+            TimedPhasePrompt::AssignInterceptors(continent) => {
+                format!("Assign Interceptors to {:?}", continent)
+            }
+            TimedPhasePrompt::AlienBaseDiscovered(continent) => {
+                format!("Alien Base Discovered in {:?}", continent)
+            }
         }
     }
 }
@@ -244,6 +275,20 @@ impl ResolutionPhasePrompt {
             Self::CleanUp => Some(Self::ResolveContinentBonuses),
             Self::PurchaseReplacementForces => Some(Self::CleanUp),
         }
+    }
+
+    pub fn title(&self) -> String {
+        match self {
+            ResolutionPhasePrompt::AuditSpending => "Audit Spending",
+            ResolutionPhasePrompt::ResolveResearch => "Resolve Research",
+            ResolutionPhasePrompt::ResolveUFODefense => "Resolve UFO Defense",
+            ResolutionPhasePrompt::IncreasePanic => "Increase Panic",
+            ResolutionPhasePrompt::AskForBoardState => "Update Board State",
+            ResolutionPhasePrompt::ResolveContinentBonuses => "Gain Continent Bonuses",
+            ResolutionPhasePrompt::CleanUp => "Clean Up",
+            ResolutionPhasePrompt::PurchaseReplacementForces => "Replenish Forces",
+        }
+        .to_owned()
     }
 }
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -481,10 +481,8 @@ name = "xcom-1-card"
 version = "0.1.0"
 dependencies = [
  "indoc",
- "log",
  "rand",
  "test-case",
- "wasm-logger",
 ]
 
 [[package]]

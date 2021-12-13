@@ -1,0 +1,165 @@
+body {
+    padding: 0;
+    margin: 0;
+    background-color: #282a36;
+    color: #f8f8f2;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+img {
+    width: 100%
+}
+
+.main {
+    width: 100%;
+    max-width: 810px;
+    height: 100vh;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+}
+
+.prompt-title {
+    text-align: center;
+}
+
+.prompt-center-area {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: 1fr 4fr 1fr;
+    overflow: hidden;
+}
+
+.prompt-icons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    align-items: center;
+    background-color: #222222;
+    padding: 1em;
+}
+
+.prompt-details {
+    overflow-y: auto;
+}
+
+.bottom-panel {
+    display: flex;
+    justify-content: space-between;
+}
+
+.timer {
+    font-size: xx-large;
+}
+
+.button-back, .button-done {
+    font-size: xx-large;
+}
+
+.prompt-icon {
+    width: 33%;
+}
+
+.alien-dice-back {
+    background-origin: content-box;
+    background-color: #ad3030;
+    border-radius: 20%;
+    max-width: 80%;
+    padding: 12.5%;
+}
+
+.prompt-description {
+    margin-top: 1em;
+    text-align: justify;
+    font-size: large;
+}
+
+.board-input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    flex-grow: 1;
+}
+
+.board-input-title {
+    font-size: xx-large;
+    text-align: center;
+    margin-top: 1em;
+}
+
+.panic-input-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr 2fr;
+    gap: 20px;
+    margin: auto;
+    margin-top: 1em;
+    width: 60%;
+}
+
+.panic-input-radio {
+    grid-row: 1;
+}
+
+.panic-input-label {
+    grid-row: 2;
+}
+
+.ufo-input-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 1em;
+    gap: 1em;
+}
+
+.ufo-input-text {
+    min-width: 20%;
+    font-size: xx-large;
+    text-align: center;
+}
+
+.ufo-input-button {
+    min-width: 3em;
+}
+
+.alien-base-destroyed-input-container {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    max-width: 75%;
+    font-size: xx-large;
+    text-align: center;
+    margin-top: 1em;
+}
+
+.alien-base-destroyed-input-checkbox {
+    font-size: xx-large;
+    max-width: 2em;
+}
+
+.background-image {
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    width: 100%;
+    height: 100%;
+}
+
+.prepare-screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.prepare-screen-text {
+    text-align: center;
+    font-size: xxx-large;
+    color: whitesmoke;
+    margin-top: 1em;
+}
+
+.prepare-screen-button {
+    text-align: center;
+    font-size: xx-large;
+    margin: 1em;
+}
