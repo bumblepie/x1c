@@ -11,6 +11,7 @@ use xcom_1_card::{
 use yew::prelude::*;
 
 enum Msg {
+    BeginGame,
     EnterTimedPhase,
     TimedPhaseCompleted,
     EnterResolutionPhase,
@@ -21,6 +22,7 @@ enum Msg {
     },
     GameCompleted(GameResult),
     UndoGameCompleted,
+    ReturnToMainMenu,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -31,6 +33,17 @@ struct GameState {
     ufos_left: u32,
 }
 
+impl GameState {
+    fn new() -> Self {
+        Self {
+            round: 1,
+            alien_base_discovered: false,
+            panic_level: PanicLevel::Yellow,
+            ufos_left: 0,
+        }
+    }
+}
+
 struct Model {
     phase: Phase,
     game_state: GameState,
@@ -38,7 +51,7 @@ struct Model {
     link: ComponentLink<Self>,
 }
 enum Phase {
-    // MainMenu,
+    MainMenu,
     // Setup,
     PrepareForTimedPhase,
     TimedPhase(Vec<TimedPhasePrompt>),
@@ -54,13 +67,8 @@ impl Component for Model {
 
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
-            phase: Phase::PrepareForTimedPhase,
-            game_state: GameState {
-                round: 1,
-                alien_base_discovered: false,
-                panic_level: PanicLevel::Yellow,
-                ufos_left: 0,
-            },
+            phase: Phase::MainMenu,
+            game_state: GameState::new(),
             resolution_phase_starting_prompt: ResolutionPhasePrompt::start(),
             link,
         }
@@ -68,20 +76,21 @@ impl Component for Model {
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::EnterTimedPhase => match self.phase {
-                Phase::PrepareForTimedPhase => {
-                    let prompts = generate_timed_phase_prompts(
-                        self.game_state.round,
-                        &self.game_state.panic_level,
-                        self.game_state.ufos_left,
-                        self.game_state.round == 5,
-                        &mut thread_rng(),
-                    );
-                    self.phase = Phase::TimedPhase(prompts);
-                    true
-                }
-                _ => false,
-            },
+            Msg::BeginGame => {
+                self.phase = Phase::PrepareForTimedPhase;
+                true
+            }
+            Msg::EnterTimedPhase => {
+                let prompts = generate_timed_phase_prompts(
+                    self.game_state.round,
+                    &self.game_state.panic_level,
+                    self.game_state.ufos_left,
+                    self.game_state.round == 5,
+                    &mut thread_rng(),
+                );
+                self.phase = Phase::TimedPhase(prompts);
+                true
+            }
             Msg::AlienBaseDiscovered => {
                 self.game_state.alien_base_discovered = true;
                 false
@@ -98,19 +107,16 @@ impl Component for Model {
             Msg::ResolutionPhaseCompleted {
                 panic_level,
                 ufos_left,
-            } => match self.phase {
-                Phase::ResolutionPhase => {
-                    self.phase = Phase::PrepareForTimedPhase;
-                    self.game_state = GameState {
-                        panic_level,
-                        ufos_left,
-                        round: self.game_state.round + 1,
-                        ..self.game_state
-                    };
-                    true
-                }
-                _ => false,
-            },
+            } => {
+                self.phase = Phase::PrepareForTimedPhase;
+                self.game_state = GameState {
+                    panic_level,
+                    ufos_left,
+                    round: self.game_state.round + 1,
+                    ..self.game_state
+                };
+                true
+            }
             Msg::GameCompleted(result) => {
                 self.phase = Phase::GameCompleted(result);
                 true
@@ -118,6 +124,12 @@ impl Component for Model {
             Msg::UndoGameCompleted => {
                 self.phase = Phase::ResolutionPhase;
                 self.resolution_phase_starting_prompt = ResolutionPhasePrompt::AskForBoardState;
+                true
+            }
+            Msg::ReturnToMainMenu => {
+                self.phase = Phase::MainMenu;
+                self.game_state = GameState::new();
+                self.resolution_phase_starting_prompt = ResolutionPhasePrompt::start();
                 true
             }
         }
@@ -129,9 +141,18 @@ impl Component for Model {
 
     fn view(&self) -> Html {
         html! {
+            <>
             <div class="main">
                 {
                     match self.phase {
+                        Phase::MainMenu => {
+                            html! {
+                                <div class="background-image prepare-screen" style="background-image: url(assets/background-art/alien-head.png)">
+                                    <div class="prepare-screen-text">{ "X-1C" }</div>
+                                    <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::BeginGame)> {"Start"}</button>
+                                </div>
+                            }
+                        }
                         Phase::PrepareForTimedPhase => {
                             html! {
                                 <div class="background-image prepare-screen" style="background-image: url(assets/background-art/ufos-with-sunset.png)">
@@ -177,13 +198,17 @@ impl Component for Model {
                             html!{
                                 <div class="background-image prepare-screen" style=format!("background-image: url({})", image_for_result(result))>
                                     <div class="prepare-screen-text">{ format!("{}", result) }</div>
-                                    <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::UndoGameCompleted) >{ "Back" }</button>
+                                    <div class="bottom-panel">
+                                        <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::UndoGameCompleted) >{ "Back" }</button>
+                                        <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::ReturnToMainMenu) >{ "Quit" }</button>
+                                    </div>
                                 </div>
                             }
                         },
                     }
                 }
             </div>
+            </>
         }
     }
 }
