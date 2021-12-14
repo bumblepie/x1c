@@ -110,7 +110,7 @@ impl Component for TimedPhase {
                     </div>
                 </div>
                 <div class="bottom-panel">
-                    <button class="button-back" onclick=self.link.callback(|_| Msg::PreviousPrompt)>{ "Back" }</button>
+                    <button class="button-back" onclick=self.link.callback(|_| Msg::PreviousPrompt) disabled={ self.current_prompt_index < 1 }>{ "Back" }</button>
                     <span class="timer">{ "00:00" }</span>
                     <button class="button-done" onclick=next_callback>{ "Done" }</button>
                 </div>

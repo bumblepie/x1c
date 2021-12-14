@@ -219,9 +219,9 @@ impl Component for ResolutionPhase {
                         <div>
                             <div class="board-input-title">{ "UFOs left on map:"} </div>
                             <div class="ufo-input-container">
-                                <button class="ufo-input-button" onclick=self.link.callback(|_| Msg::DecreaseUFOsLeft)>{"-"}</button>
+                                <button class="ufo-input-button" onclick=self.link.callback(|_| Msg::DecreaseUFOsLeft) disabled={self.ufos_left_input < 1}>{"-"}</button>
                                 <span class="ufo-input-text" >{ self.ufos_left_input }</span>
-                                <button class="ufo-input-button" onclick=self.link.callback(|_| Msg::IncreaseUFOsLeft)>{"+"}</button>
+                                <button class="ufo-input-button" onclick=self.link.callback(|_| Msg::IncreaseUFOsLeft) disabled={self.ufos_left_input > 17}>{"+"}</button>
                             </div>
                         </div>
                         {
@@ -279,7 +279,7 @@ impl Component for ResolutionPhase {
             <>
                 {main_section}
                 <div class="bottom-panel">
-                    <button class="button-back" onclick=self.link.callback(|_| Msg::PreviousPrompt)>{ "Back" }</button>
+                    <button class="button-back" onclick=self.link.callback(|_| Msg::PreviousPrompt) disabled={self.prompt.prev().is_none()}>{ "Back" }</button>
                     <button class="button-done" onclick=next_callback>{ "Done" }</button>
                 </div>
             </>

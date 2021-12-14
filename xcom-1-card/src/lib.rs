@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use rand::{
     distributions::{Uniform, WeightedIndex},
     prelude::*,
@@ -296,6 +298,16 @@ pub enum GameResult {
     Victory,
     PyrrhicVictory,
     Defeat,
+}
+
+impl Display for GameResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Victory => write!(f, "Victory"),
+            Self::PyrrhicVictory => write!(f, "Pyrrhic Victory"),
+            Self::Defeat => write!(f, "Defeat"),
+        }
+    }
 }
 
 #[cfg(test)]

@@ -130,16 +130,13 @@ impl Component for Model {
     fn view(&self) -> Html {
         html! {
             <div class="main">
-                // <div>
-                //     <p> { format!("Round {}", self.game_state.round) }</p>
-                // </div>
                 {
                     match self.phase {
                         Phase::PrepareForTimedPhase => {
                             html! {
                                 <div class="background-image prepare-screen" style="background-image: url(assets/background-art/ufos-with-sunset.png)">
                                     <div class="prepare-screen-text">{ "Prepare for Timed Phase" }</div>
-                                    <button class="prepare-screen-button" onclick=self.link.callback(|_| Msg::EnterTimedPhase)> {"Enter Timed Phase"}</button>
+                                    <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::EnterTimedPhase)> {"Enter Timed Phase"}</button>
                                 </div>
                             }
                         }
@@ -157,7 +154,7 @@ impl Component for Model {
 
                                 <div class="background-image prepare-screen" style="background-image: url(assets/background-art/ufos-over-city.png)">
                                     <div class="prepare-screen-text">{ "Prepare for Resolution Phase" }</div>
-                                    <button class="prepare-screen-button" onclick=self.link.callback(|_| Msg::EnterResolutionPhase)> {"Enter Resolution Phase"}</button>
+                                    <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::EnterResolutionPhase)> {"Enter Resolution Phase"}</button>
                                 </div>
                             }
                         }
@@ -178,20 +175,27 @@ impl Component for Model {
                         },
                         Phase::GameCompleted(ref result) => {
                             html!{
-                                <div class="prepare-screen">
-                                    <p>{ format!("{:?}", result) }</p>
-                                    <button onclick=self.link.callback(|_| Msg::UndoGameCompleted) >{ "Back" }</button>
+                                <div class="background-image prepare-screen" style=format!("background-image: url({})", image_for_result(result))>
+                                    <div class="prepare-screen-text">{ format!("{}", result) }</div>
+                                    <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::UndoGameCompleted) >{ "Back" }</button>
                                 </div>
                             }
                         },
                     }
                 }
-                // <div>
-                //     <p>{ format!("{:?}", self.game_state) }</p>
-                // </div>
             </div>
         }
     }
+}
+
+fn image_for_result(result: &GameResult) -> String {
+    match result {
+        GameResult::Victory | GameResult::PyrrhicVictory => {
+            "assets/background-art/alien-base-destroyed.png"
+        }
+        GameResult::Defeat => "assets/background-art/alien-base-heart.png",
+    }
+    .to_owned()
 }
 
 fn main() {
