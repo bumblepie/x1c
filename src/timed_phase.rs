@@ -1,14 +1,21 @@
+use boolinator::Boolinator;
+use gloo::timers::callback::Interval;
 use xcom_1_card::TimedPhasePrompt;
 use yew::{prelude::*, web_sys::Element};
 
 pub enum Msg {
     NextPrompt,
     PreviousPrompt,
+    Tick,
 }
 
 pub struct TimedPhase {
     link: ComponentLink<Self>,
     current_prompt_index: usize,
+    latest_prompt_index: usize,
+    time_remaining_ms: f64,
+    last_tick_time: f64,
+    tick_interval: Interval,
     props: TimedPhaseProps,
     prompt_details_ref: NodeRef,
 }
@@ -25,9 +32,17 @@ impl Component for TimedPhase {
     type Properties = TimedPhaseProps;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let tick_interval = {
+            let link = link.clone();
+            Interval::new(87, move || link.send_message(Msg::Tick))
+        };
         Self {
             link,
             current_prompt_index: 0,
+            latest_prompt_index: 0,
+            time_remaining_ms: 15_000.0,
+            last_tick_time: js_sys::Date::now(),
+            tick_interval,
             props,
             prompt_details_ref: NodeRef::default(),
         }
@@ -43,7 +58,12 @@ impl Component for TimedPhase {
                     ) {
                         self.props.on_alien_base_discovered.emit(());
                     }
+                    if self.current_prompt_index + 1 > self.latest_prompt_index {
+                        self.latest_prompt_index = self.current_prompt_index + 1;
+                        self.time_remaining_ms += 5000.0;
+                    }
                     self.current_prompt_index += 1;
+
                     if let Some(element) = self.prompt_details_ref.cast::<Element>() {
                         element.scroll_to_with_x_and_y(0.0, 0.0);
                     }
@@ -62,6 +82,13 @@ impl Component for TimedPhase {
                 } else {
                     false
                 }
+            }
+            Msg::Tick => {
+                let next_tick_time = js_sys::Date::now();
+                let diff = next_tick_time - self.last_tick_time;
+                self.time_remaining_ms = f64::max(self.time_remaining_ms - diff, 0.0);
+                self.last_tick_time = next_tick_time;
+                true
             }
         }
     }
@@ -92,6 +119,8 @@ impl Component for TimedPhase {
                     icon_html_for_prompt(&self.props.prompts[self.current_prompt_index]),
                 )
             };
+        let time_s = (self.time_remaining_ms / 1000.0).floor();
+        let time_ms = ((self.time_remaining_ms % 1000.0) / 10.0).floor();
         html! {
             <>
                 <h1 class="prompt-title">{ title }</h1>
@@ -111,7 +140,7 @@ impl Component for TimedPhase {
                 </div>
                 <div class="bottom-panel">
                     <button class="button-back" onclick=self.link.callback(|_| Msg::PreviousPrompt) disabled={ self.current_prompt_index < 1 }>{ "Back" }</button>
-                    <span class="timer">{ "00:00" }</span>
+                    <span class=classes!("timer", (time_s < 5.0).as_some("blink-red"))>{ format!("{:3.0}:{:02.0}", time_s, time_ms) }</span>
                     <button class="button-done" onclick=next_callback>{ "Done" }</button>
                 </div>
             </>
