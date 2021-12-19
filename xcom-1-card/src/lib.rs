@@ -19,14 +19,24 @@ pub enum Continent {
     Eurasia,
 }
 
-impl Into<String> for &Continent {
-    fn into(self) -> String {
+impl Continent {
+    pub fn lowercase(&self) -> String {
         match self {
             Continent::America => "america",
             Continent::Africa => "africa",
             Continent::Eurasia => "eurasia",
         }
         .to_owned()
+    }
+}
+
+impl Display for &Continent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Continent::America => write!(f, "America"),
+            Continent::Africa => write!(f, "Africa"),
+            Continent::Eurasia => write!(f, "Eurasia"),
+        }
     }
 }
 

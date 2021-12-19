@@ -1,3 +1,4 @@
+use crate::common::inline_icon_text_phrase;
 use boolinator::Boolinator;
 use gloo::timers::callback::Interval;
 use xcom_1_card::TimedPhasePrompt;
@@ -103,22 +104,29 @@ impl Component for TimedPhase {
     }
 
     fn view(&self) -> Html {
-        let (title, next_callback, icons_html) =
-            if self.current_prompt_index == self.props.prompts.len() {
-                (
-                    "Completing Timed Phase".to_owned(),
-                    self.props.on_completed.clone(),
-                    html! {
-                        <img class="prompt-icon" src="assets/icons/time.png"/>
-                    },
-                )
-            } else {
-                (
-                    self.props.prompts[self.current_prompt_index].title(),
-                    self.link.callback(|_| Msg::NextPrompt),
-                    icon_html_for_prompt(&self.props.prompts[self.current_prompt_index]),
-                )
-            };
+        let (title, next_callback, icons_html, description) = if self.current_prompt_index
+            == self.props.prompts.len()
+        {
+            (
+                "Completing Timed Phase".to_owned(),
+                self.props.on_completed.clone(),
+                html! {
+                    <img class="prompt-icon" src="assets/icons/time.png"/>
+                },
+                html! {
+                    <>
+                        {"This is a final chance to use "}{inline_icon_text_phrase("time", "Timed Phase")}{" "}{inline_icon_text_phrase("tech", "Technology")}{" or to use "}{inline_icon_text_phrase("satellite", "Satellites")}{" to adjust deployment of your "}{{inline_icon_text_phrase("interceptor", "Interceptors.")}}
+                    </>
+                },
+            )
+        } else {
+            (
+                self.props.prompts[self.current_prompt_index].title(),
+                self.link.callback(|_| Msg::NextPrompt),
+                icon_html_for_prompt(&self.props.prompts[self.current_prompt_index]),
+                description_html_for_prompt(&self.props.prompts[self.current_prompt_index]),
+            )
+        };
         let time_s = (self.time_remaining_ms / 1000.0).floor();
         let time_ms = ((self.time_remaining_ms % 1000.0) / 10.0).floor();
         html! {
@@ -132,7 +140,7 @@ impl Component for TimedPhase {
                             {icons_html}
                         </div>
                         <div class="prompt-description">
-                            {"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."}
+                            {description}
                         </div>
                     </div>
                     <div class="timed-phase-prompt-preview">
@@ -158,7 +166,7 @@ fn icon_html_for_prompt(prompt: &TimedPhasePrompt) -> Html {
                 <img class="prompt-icon" src="assets/icons/roll.png"/>
                 <div class="prompt-icon">
                     <img class="alien-dice-back" src="assets/icons/ufo.png"/>
-                    <img class="continent-location" src=format!("assets/icons/{}-board-position.png", Into::<String>::into(continent))/>
+                    <img class="continent-location" src=format!("assets/icons/{}-board-position.png", continent.lowercase())/>
                 </div>
             </>
         },
@@ -173,7 +181,7 @@ fn icon_html_for_prompt(prompt: &TimedPhasePrompt) -> Html {
                 }/>
                 <div class="prompt-icon">
                     <img class="alien-dice-back" src="assets/icons/ufo.png"/>
-                    <img class="continent-location" src=format!("assets/icons/{}-board-position.png", Into::<String>::into(continent))/>
+                    <img class="continent-location" src=format!("assets/icons/{}-board-position.png", continent.lowercase())/>
                 </div>
             </>
         },
@@ -181,12 +189,12 @@ fn icon_html_for_prompt(prompt: &TimedPhasePrompt) -> Html {
             <>
                 <div class="prompt-icon">
                     <img class="alien-dice-back" src="assets/icons/ufo.png"/>
-                    <img class="continent-location" src=format!("assets/icons/{}-board-position.png", Into::<String>::into(from))/>
+                    <img class="continent-location" src=format!("assets/icons/{}-board-position.png", from.lowercase())/>
                 </div>
                 <img class="prompt-icon" src="assets/icons/swap.png"/>
                 <div class="prompt-icon">
                     <img class="alien-dice-back" src="assets/icons/ufo.png"/>
-                    <img class="continent-location" src=format!("assets/icons/{}-board-position.png", Into::<String>::into(to))/>
+                    <img class="continent-location" src=format!("assets/icons/{}-board-position.png", to.lowercase())/>
                 </div>
             </>
         },
@@ -196,14 +204,64 @@ fn icon_html_for_prompt(prompt: &TimedPhasePrompt) -> Html {
         TimedPhasePrompt::AssignInterceptors(continent) => html! {
             <div class="prompt-icon">
                 <img  src="assets/icons/interceptor.png"/>
-                <img class="continent-location" src=format!("assets/icons/{}-board-position.png", Into::<String>::into(continent))/>
+                <img class="continent-location" src=format!("assets/icons/{}-board-position.png", continent.lowercase())/>
             </div>
         },
         TimedPhasePrompt::AlienBaseDiscovered(continent) => html! {
             <div class="prompt-icon">
                 <img  src="assets/icons/alien-base.png"/>
-                <img class="continent-location" src=format!("assets/icons/{}-board-position.png", Into::<String>::into(continent))/>
+                <img class="continent-location" src=format!("assets/icons/{}-board-position.png", continent.lowercase())/>
             </div>
+        },
+    }
+}
+
+fn description_html_for_prompt(prompt: &TimedPhasePrompt) -> Html {
+    match prompt {
+        TimedPhasePrompt::TakeIncome(n) => html! {
+            <>
+                {format!("Take §{} from the supply and add it to your funds.", n)}
+            </>
+        },
+        TimedPhasePrompt::RollUFOLocation(location) => html! {
+            <>
+                {format!("Roll a UFO die and place it on the World Map over {}.", location)}
+            </>
+        },
+        TimedPhasePrompt::AddUFOsToLocation(location, amount) => html! {
+            <>
+                {format!("Increase the number of UFOs over {} by {}.", location, amount)}
+            </>
+        },
+        TimedPhasePrompt::SwapUFOLocations(from, to) => html! {
+            <>
+                {format!("Swap the UFO die over {} with the one over {}.", from, to)}
+            </>
+        },
+        TimedPhasePrompt::ChooseResearch => html! {
+            <>
+                <p>
+                    {"Select a "}{inline_icon_text_phrase("tech", "Technology")}{" to research. Set the "}{inline_icon_text_phrase("research", "Research Budget")}{" for the round."}
+                </p>
+                <p>
+                    {"Each point in the "}{inline_icon_text_phrase("research", "Research Budget")}{" will cost §1."}
+                </p>
+            </>
+        },
+        TimedPhasePrompt::AssignInterceptors(location) => html! {
+            <>
+                <p>
+                    {"Assign "}{inline_icon_text_phrase("interceptor", "Interceptors")}{format!(" to {} from your reserves.", location)}
+                </p>
+                <p>
+                    {"Each deployed "}{inline_icon_text_phrase("interceptor", "Interceptor")}{" will cost §1."}
+                </p>
+            </>
+        },
+        TimedPhasePrompt::AlienBaseDiscovered(location) => html! {
+            <>
+                {format!("Add the alien base token to {}. Destroy the alien base to win the game!", location)}
+            </>
         },
     }
 }

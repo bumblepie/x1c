@@ -1,3 +1,4 @@
+mod common;
 mod resolution_phase;
 mod timed_phase;
 

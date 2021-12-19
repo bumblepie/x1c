@@ -279,3 +279,46 @@ input[type="checkbox"]::before {
 input[type="checkbox"]:checked::before {
     transform: scale(1);
 }
+
+.icon-header {
+    margin: auto;
+    display: block;
+    width: 2em;
+}
+
+.prompt-success-outcome-container {
+    background-color: #6272a4;
+    border-radius: 1em;
+    padding: 1em;
+    margin-top: 1em;
+}
+
+.prompt-threat-outcome-container {
+    background-color: #ff5555;
+    border-radius: 1em;
+    padding: 1em;
+    margin-top: 1em;
+}
+
+.float-left {
+    float: left;
+}
+
+.continent-bonus-header {
+    margin: 0;
+    text-align: center;
+}
+
+.inline-icon {
+    width: 1em;
+    display: inline;
+    vertical-align: middle;
+}
+
+.icon-text-phrase {
+    display: inline-block;
+    background-color: rgba(255, 255, 255, .1);
+    border-radius: .5em;
+    padding: .1em;
+    margin: .1em;
+}

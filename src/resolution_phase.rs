@@ -5,6 +5,8 @@ use yew::{
     Callback, ChangeData, Component, ComponentLink, Html, NodeRef, Properties,
 };
 
+use crate::common::inline_icon_text_phrase;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PanicLevelInput {
     PanicLevel(PanicLevel),
@@ -189,7 +191,7 @@ impl Component for ResolutionPhase {
                 html! {
                     <div class="board-input-container">
                         <div>
-                            <div class="board-input-title">{ "Global panic level:"} </div>
+                            <div class="board-input-title">{ "Global Panic Level:"} </div>
                             <div class="panic-input-container">
                             {
                                 vec!["yellow", "orange", "red", "alien"].into_iter()
@@ -228,7 +230,7 @@ impl Component for ResolutionPhase {
                             if self.alien_base_discovered {
                             html!{
                                 <div class="alien-base-destroyed-input-container">
-                                    <label for="alien_base_destroyed_input">{ "Alien base destroyed?" }</label>
+                                    <label for="alien_base_destroyed_input">{ "Alien Base destroyed?" }</label>
                                     <input
                                     class="alien-base-destroyed-input-checkbox"
                                         type="checkbox"
@@ -262,7 +264,7 @@ impl Component for ResolutionPhase {
                                 {icon_html_for_prompt(&self.prompt)}
                             </div>
                             <div class="prompt-description">
-                                {"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."}
+                                {description_html_for_prompt(&self.prompt, self.alien_base_discovered)}
                             </div>
                         </div>
                     </div>
@@ -314,6 +316,150 @@ fn icon_html_for_prompt(prompt: &ResolutionPhasePrompt) -> Html {
         },
         ResolutionPhasePrompt::PurchaseReplacementForces => html! {
             <img class="prompt-icon" src="assets/icons/replenish.png"/>
+        },
+    }
+}
+
+fn description_html_for_prompt(
+    prompt: &ResolutionPhasePrompt,
+    alien_base_discovered: bool,
+) -> Html {
+    match prompt {
+        ResolutionPhasePrompt::AuditSpending => html! {
+            <>
+                <p>
+                    {"For each deployed "}{inline_icon_text_phrase("interceptor", "Interceptor")}{" and each point of "}{inline_icon_text_phrase("research", "Research Budget")}{", pay §1 from your funds to the supply."}
+                </p>
+                <p>
+                    {"If you cannot afford a payment, instead increase the "}{inline_icon_text_phrase("panic", "Panic Track")}{" one space for each §1 you cannot pay."}
+                </p>
+            </>
+        },
+        ResolutionPhasePrompt::ResolveResearch => html! {
+            <>
+                <p>
+                    {"Attempt the "}{inline_icon_text_phrase("research", "Research")}{"task, rolling a number of success dice equal to the "}{inline_icon_text_phrase("research", "Research Budget")}{"."}
+                </p>
+                <p>
+                    {"Remember to increase the "}{inline_icon_text_phrase("alien", "Alien Threat")}{" by one after each attempt."}
+                </p>
+                <div class="prompt-success-outcome-container">
+                    <img class="icon-header" src="assets/icons/success.png" />
+                    <p>
+                        {"Add a success token to the selected "}{inline_icon_text_phrase("tech", "Technology.")}{" If there are tokens equal to the technology's "}{inline_icon_text_phrase("research", "Research Cost")}{", gain the "}{inline_icon_text_phrase("tech", "Technology")}{"."}
+                    </p>
+                </div>
+                <div class="prompt-threat-outcome-container">
+                    <img class="icon-header" src="assets/icons/alien.png" />
+                    <p>
+                        {"The volatile alien technology explodes. Remove the selected "}{inline_icon_text_phrase("tech", "Technology")}{" from the game."}
+                    </p>
+                    <p>
+                        {"If you also rolled enough successes to fully research the "}{inline_icon_text_phrase("tech", "Technology")}{", remove a different "}{inline_icon_text_phrase("tech", "Technology")}{" of your choice instead (you still gain the researched "}{inline_icon_text_phrase("tech", "Technology")}{")."}
+                    </p>
+                </div>
+            </>
+        },
+        ResolutionPhasePrompt::ResolveUFODefense => html! {
+            <>
+                <p>
+                    {"In any order, complete the UFO defense task for each continent on the world map. Roll a number of success dice equal to the number of "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" assigned to the continent."}
+                </p>
+                <p>
+                    {"Remember to increase the "}{inline_icon_text_phrase("alien", "Alien Threat")}{" by one after each attempt, and to reset the "}{inline_icon_text_phrase("alien", "Alien Threat")}{" when changing to a different continent."}
+                </p>
+                <div class="prompt-success-outcome-container">
+                    <img class="icon-header" src="assets/icons/success.png" />
+                    <p>
+                        {"Remove one UFO from the continent."}
+                        {
+                            if alien_base_discovered {
+                                " Once all UFOs have been removed from the continent, any additional successes add a success token on the Alien Base. Once the third success token has been added to the Alien Base, it is destroyed!"
+                            } else {
+                                ""
+                            }
+                        }
+                    </p>
+                </div>
+                <div class="prompt-threat-outcome-container">
+                    <img class="icon-header" src="assets/icons/alien.png" />
+                    <p>
+                        {"Your interceptors are shot down by the UFOs. Remove half of the "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" assigned to this task (rounded up) - add them back to the supply (not your reserves)."}
+                    </p>
+                    <p>
+                        {"Note: you will roll fewer success dice in subsequent attempts at this task as the removed "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" are no longer assigned to the task."}
+                    </p>
+                </div>
+            </>
+        },
+        ResolutionPhasePrompt::IncreasePanic => html! {
+            <>
+                <p>
+                    {"For each continent with any remaining UFOs, increase the "}{inline_icon_text_phrase("panic", "Panic Track")}{" one space."}
+                </p>
+            </>
+        },
+        ResolutionPhasePrompt::AskForBoardState => html! {},
+        ResolutionPhasePrompt::ResolveContinentBonuses => html! {
+            <>
+                <p>
+                    {"For each continent with no remaining UFOs, gain that continent's bonus."}
+                </p>
+                <div class="prompt-success-outcome-container">
+                    <div class="float-left">
+                        <img class="icon-header" src="assets/icons/america.png" />
+                        <img class="icon-header" src="assets/icons/america-board-position.png" />
+                    </div>
+                    <h2 class="continent-bonus-header">{"America"}</h2>
+                    <h4 class="continent-bonus-header">{"Air and Space:"}</h4>
+                    <p>
+                        {"Add one "}{inline_icon_text_phrase("interceptor", "Interceptor")}{" from the supply to your reserves."}
+                    </p>
+                    <p>
+                        {"Increase your number of "}{inline_icon_text_phrase("satellite", "Satellites")}{" by 1 (to a maximum of 3)."}
+                    </p>
+                </div>
+                <div class="prompt-success-outcome-container">
+                    <div class="float-left">
+                        <img class="icon-header" src="assets/icons/africa.png" />
+                        <img class="icon-header" src="assets/icons/africa-board-position.png" />
+                    </div>
+                    <h2 class="continent-bonus-header">{"Africa"}</h2>
+                    <h4 class="continent-bonus-header">{"All In:"}</h4>
+                    <p>
+                        {"Take §2 from the supply and add it to your funds."}
+                    </p>
+                </div>
+                <div class="prompt-success-outcome-container">
+                    <div class="float-left">
+                        <img class="icon-header" src="assets/icons/eurasia.png" />
+                        <img class="icon-header" src="assets/icons/eurasia-board-position.png" />
+                    </div>
+                    <h2 class="continent-bonus-header">{"Eurasia"}</h2>
+                    <h4 class="continent-bonus-header">{"Expert Knowledge:"}</h4>
+                    <p>
+                        {"Add one success token to the "}{inline_icon_text_phrase("tech", "Technology")}{" currently selected for research. If there is no "}{inline_icon_text_phrase("tech", "Technology")}{" currently selected, select a "}{inline_icon_text_phrase("tech", "Technology")}{" with a "}{inline_icon_text_phrase("research", "Research Cost")}{" of at least 2 and then add a success token to it."}
+                    </p>
+                </div>
+            </>
+        },
+        ResolutionPhasePrompt::CleanUp => html! {
+            <p>
+                {"Remove all UFO dice from the world map. Return all assigned "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" to your reserves."}
+            </p>
+        },
+        ResolutionPhasePrompt::PurchaseReplacementForces => html! {
+            <>
+                <p>
+                    {"You may purchase additional "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" and "}{inline_icon_text_phrase("satellite", "Satellites")}{":"}
+                </p>
+                <p>
+                    {"For §1 each, add an "}{inline_icon_text_phrase("interceptor", "Interceptor")}{" from the supply to your reserves."}
+                </p>
+                <p>
+                    {"For §2 each, increase your number of "}{inline_icon_text_phrase("satellite", "Satellites")}{" by 1 (to a maximum of 3)."}
+                </p>
+            </>
         },
     }
 }
