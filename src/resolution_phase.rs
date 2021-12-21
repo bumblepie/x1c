@@ -338,7 +338,7 @@ fn description_html_for_prompt(
         ResolutionPhasePrompt::ResolveResearch => html! {
             <>
                 <p>
-                    {"Attempt the "}{inline_icon_text_phrase("research", "Research")}{"task, rolling a number of success dice equal to the "}{inline_icon_text_phrase("research", "Research Budget")}{"."}
+                    {"Attempt the "}{inline_icon_text_phrase("research", "Research")}{" task, rolling a number of "}{inline_icon_text_phrase("success", "Success Dice")}{" equal to the "}{inline_icon_text_phrase("research", "Research Budget")}{"."}
                 </p>
                 <p>
                     {"Remember to increase the "}{inline_icon_text_phrase("alien", "Alien Threat")}{" by one after each attempt."}
@@ -346,7 +346,7 @@ fn description_html_for_prompt(
                 <div class="prompt-success-outcome-container">
                     <img class="icon-header" src="assets/icons/success.png" />
                     <p>
-                        {"Add a success token to the selected "}{inline_icon_text_phrase("tech", "Technology.")}{" If there are tokens equal to the technology's "}{inline_icon_text_phrase("research", "Research Cost")}{", gain the "}{inline_icon_text_phrase("tech", "Technology")}{"."}
+                        {"Add a "}{inline_icon_text_phrase("success", "Success Token")}{" to the selected "}{inline_icon_text_phrase("tech", "Technology.")}{" If there are tokens equal to the technology's "}{inline_icon_text_phrase("research", "Research Cost")}{", gain the "}{inline_icon_text_phrase("tech", "Technology")}{"."}
                     </p>
                 </div>
                 <div class="prompt-threat-outcome-container">
@@ -355,7 +355,7 @@ fn description_html_for_prompt(
                         {"The volatile alien technology explodes. Remove the selected "}{inline_icon_text_phrase("tech", "Technology")}{" from the game."}
                     </p>
                     <p>
-                        {"If you also rolled enough successes to fully research the "}{inline_icon_text_phrase("tech", "Technology")}{", remove a different "}{inline_icon_text_phrase("tech", "Technology")}{" of your choice instead (you still gain the researched "}{inline_icon_text_phrase("tech", "Technology")}{")."}
+                        {"If you also rolled enough "}{inline_icon_text_phrase("success", "Successes")}{" to fully research the "}{inline_icon_text_phrase("tech", "Technology")}{", remove a different "}{inline_icon_text_phrase("tech", "Technology")}{" of your choice instead (you still gain the researched "}{inline_icon_text_phrase("tech", "Technology")}{")."}
                     </p>
                 </div>
             </>
@@ -363,7 +363,7 @@ fn description_html_for_prompt(
         ResolutionPhasePrompt::ResolveUFODefense => html! {
             <>
                 <p>
-                    {"In any order, complete the UFO defense task for each continent on the world map. Roll a number of success dice equal to the number of "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" assigned to the continent."}
+                    {"In any order, complete the "}{inline_icon_text_phrase("interceptor", "UFO Defense Task")}{" for each continent on the world map. Roll a number of "}{inline_icon_text_phrase("success", "Success Dice")}{" equal to the number of "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" assigned to the continent."}
                 </p>
                 <p>
                     {"Remember to increase the "}{inline_icon_text_phrase("alien", "Alien Threat")}{" by one after each attempt, and to reset the "}{inline_icon_text_phrase("alien", "Alien Threat")}{" when changing to a different continent."}
@@ -372,14 +372,18 @@ fn description_html_for_prompt(
                     <img class="icon-header" src="assets/icons/success.png" />
                     <p>
                         {"Remove one UFO from the continent."}
-                        {
-                            if alien_base_discovered {
-                                " Once all UFOs have been removed from the continent, any additional successes add a success token on the Alien Base. Once the third success token has been added to the Alien Base, it is destroyed!"
-                            } else {
-                                ""
-                            }
-                        }
                     </p>
+                    {
+                        if alien_base_discovered {
+                            html!{
+                                <p>
+                                    {"Once all UFOs have been removed from the continent containing the "}{inline_icon_text_phrase("alien", "Alien Base,")}{" any additional "}{inline_icon_text_phrase("success", "Successes")}{" rolled in this continent's "}{inline_icon_text_phrase("interceptor", "UFO Defense Task")}{" instead add a "}{inline_icon_text_phrase("success", "Success Token")}{" on the "}{inline_icon_text_phrase("alien", "Alien Base.")}{" Once the third "}{inline_icon_text_phrase("success", "Success Token")}{" has been added to the "}{inline_icon_text_phrase("alien", "Alien Base")}{", it is destroyed!"}
+                                </p>
+                            }
+                        } else {
+                            html!{}
+                        }
+                    }
                 </div>
                 <div class="prompt-threat-outcome-container">
                     <img class="icon-header" src="assets/icons/alien.png" />
@@ -387,7 +391,7 @@ fn description_html_for_prompt(
                         {"Your interceptors are shot down by the UFOs. Remove half of the "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" assigned to this task (rounded up) - add them back to the supply (not your reserves)."}
                     </p>
                     <p>
-                        {"Note: you will roll fewer success dice in subsequent attempts at this task as the removed "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" are no longer assigned to the task."}
+                        {"Note: you will roll fewer "}{inline_icon_text_phrase("success", "Success Dice")}{" in subsequent attempts at this task as the removed "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" are no longer assigned to the task."}
                     </p>
                 </div>
             </>
@@ -438,7 +442,10 @@ fn description_html_for_prompt(
                     <h2 class="continent-bonus-header">{"Eurasia"}</h2>
                     <h4 class="continent-bonus-header">{"Expert Knowledge:"}</h4>
                     <p>
-                        {"Add one success token to the "}{inline_icon_text_phrase("tech", "Technology")}{" currently selected for research. If there is no "}{inline_icon_text_phrase("tech", "Technology")}{" currently selected, select a "}{inline_icon_text_phrase("tech", "Technology")}{" with a "}{inline_icon_text_phrase("research", "Research Cost")}{" of at least 2 and then add a success token to it."}
+                        {"Add one "}{inline_icon_text_phrase("success", "Success Token")}{" to the "}{inline_icon_text_phrase("tech", "Technology")}{" currently selected for research."}
+                    </p>
+                    <p>
+                        {"If there is no "}{inline_icon_text_phrase("tech", "Technology")}{" currently selected, select a "}{inline_icon_text_phrase("tech", "Technology")}{" with a "}{inline_icon_text_phrase("research", "Research Cost")}{" of at least 2 and then add a "}{inline_icon_text_phrase("success", "Success Token")}{" to it."}
                     </p>
                 </div>
             </>

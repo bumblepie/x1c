@@ -1,8 +1,10 @@
 mod common;
 mod resolution_phase;
+mod setup;
 mod timed_phase;
 
 use resolution_phase::ResolutionPhase;
+use setup::SetupComponent;
 use timed_phase::TimedPhase;
 
 use rand::thread_rng;
@@ -12,6 +14,7 @@ use xcom_1_card::{
 use yew::prelude::*;
 
 enum Msg {
+    BeginSetup,
     BeginGame,
     EnterTimedPhase,
     TimedPhaseCompleted,
@@ -53,7 +56,7 @@ struct Model {
 }
 enum Phase {
     MainMenu,
-    // Setup,
+    Setup,
     PrepareForTimedPhase,
     TimedPhase(Vec<TimedPhasePrompt>),
     PrepareForResolutionPhase,
@@ -77,6 +80,10 @@ impl Component for Model {
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
+            Msg::BeginSetup => {
+                self.phase = Phase::Setup;
+                true
+            }
             Msg::BeginGame => {
                 self.phase = Phase::PrepareForTimedPhase;
                 true
@@ -150,15 +157,25 @@ impl Component for Model {
                             html! {
                                 <div class="background-image prepare-screen" style="background-image: url(assets/background-art/alien-head.png)">
                                     <div class="prepare-screen-text">{ "X-1C" }</div>
-                                    <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::BeginGame)> {"Start"}</button>
+                                    <div class="prepare-screen-button-container">
+                                        <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::BeginSetup)> {"Instructions"}</button>
+                                        <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::BeginGame)> {"Quick Start"}</button>
+                                    </div>
                                 </div>
+                            }
+                        }
+                        Phase::Setup => {
+                            html!{
+                                <SetupComponent on_completed=self.link.callback(|_| Msg::BeginGame)/>
                             }
                         }
                         Phase::PrepareForTimedPhase => {
                             html! {
                                 <div class="background-image prepare-screen" style="background-image: url(assets/background-art/ufos-with-sunset.png)">
                                     <div class="prepare-screen-text">{ "Prepare for Timed Phase" }</div>
-                                    <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::EnterTimedPhase)> {"Enter Timed Phase"}</button>
+                                    <div class="prepare-screen-button-container">
+                                        <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::EnterTimedPhase)> {"Enter Timed Phase"}</button>
+                                    </div>
                                 </div>
                             }
                         }
@@ -176,7 +193,9 @@ impl Component for Model {
 
                                 <div class="background-image prepare-screen" style="background-image: url(assets/background-art/ufos-over-city.png)">
                                     <div class="prepare-screen-text">{ "Prepare for Resolution Phase" }</div>
-                                    <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::EnterResolutionPhase)> {"Enter Resolution Phase"}</button>
+                                    <div class="prepare-screen-button-container">
+                                        <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::EnterResolutionPhase)> {"Enter Resolution Phase"}</button>
+                                    </div>
                                 </div>
                             }
                         }
@@ -199,7 +218,7 @@ impl Component for Model {
                             html!{
                                 <div class="background-image prepare-screen" style=format!("background-image: url({})", image_for_result(result))>
                                     <div class="prepare-screen-text">{ format!("{}", result) }</div>
-                                    <div class="bottom-panel">
+                                    <div class="prepare-screen-button-container">
                                         <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::UndoGameCompleted) >{ "Back" }</button>
                                         <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::ReturnToMainMenu) >{ "Quit" }</button>
                                     </div>
