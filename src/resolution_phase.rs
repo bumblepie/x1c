@@ -1,9 +1,6 @@
+use web_sys::{Element, HtmlInputElement};
 use xcom_1_card::{GameResult, PanicLevel, ResolutionPhasePrompt};
-use yew::{
-    html,
-    web_sys::{Element, HtmlInputElement},
-    Callback, ChangeData, Component, ComponentLink, Html, NodeRef, Properties,
-};
+use yew::prelude::*;
 
 use crate::common::inline_icon_text_phrase;
 
@@ -43,16 +40,10 @@ impl TryFrom<&str> for PanicLevelInput {
 
 pub struct ResolutionPhase {
     prompt: ResolutionPhasePrompt,
-    alien_base_discovered: bool,
     panic_level_input: PanicLevelInput,
     ufos_left_input: u32,
     alien_base_destroyed_input: bool,
-    round: u32,
-    link: ComponentLink<Self>,
-    alien_base_destroyed_checkbox_ref: NodeRef,
     prompt_details_ref: NodeRef,
-    on_completed: Callback<(PanicLevel, u32)>,
-    on_game_end: Callback<GameResult>,
 }
 
 pub enum Msg {
@@ -82,23 +73,17 @@ impl Component for ResolutionPhase {
 
     type Properties = Props;
 
-    fn create(props: Self::Properties, link: yew::ComponentLink<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
         Self {
-            prompt: props.starting_prompt,
-            alien_base_discovered: props.alien_base_discovered,
-            round: props.round,
-            panic_level_input: PanicLevelInput::PanicLevel(props.panic_level.clone()),
-            ufos_left_input: props.ufos_left,
+            prompt: ctx.props().starting_prompt.clone(),
+            panic_level_input: PanicLevelInput::PanicLevel(ctx.props().panic_level.clone()),
+            ufos_left_input: ctx.props().ufos_left,
             alien_base_destroyed_input: false,
-            alien_base_destroyed_checkbox_ref: NodeRef::default(),
             prompt_details_ref: NodeRef::default(),
-            link,
-            on_completed: props.on_completed,
-            on_game_end: props.on_game_end,
         }
     }
 
-    fn update(&mut self, msg: Self::Message) -> yew::ShouldRender {
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::NextPrompt => {
                 if let Some(next_prompt) = self.prompt.next() {
@@ -109,7 +94,7 @@ impl Component for ResolutionPhase {
                     true
                 } else {
                     if let PanicLevelInput::PanicLevel(level) = self.panic_level_input.clone() {
-                        self.on_completed.emit((level, self.ufos_left_input));
+                        ctx.props().on_completed.emit((level, self.ufos_left_input));
                         false
                     } else {
                         false
@@ -153,13 +138,13 @@ impl Component for ResolutionPhase {
                     self.panic_level_input.clone(),
                 ) {
                     (true, PanicLevelInput::PanicLevel(_)) => {
-                        self.on_game_end.emit(GameResult::Victory)
+                        ctx.props().on_game_end.emit(GameResult::Victory)
                     }
                     (true, PanicLevelInput::AlienSpace) => {
-                        self.on_game_end.emit(GameResult::PyrrhicVictory)
+                        ctx.props().on_game_end.emit(GameResult::PyrrhicVictory)
                     }
                     (false, PanicLevelInput::AlienSpace) => {
-                        self.on_game_end.emit(GameResult::Defeat)
+                        ctx.props().on_game_end.emit(GameResult::Defeat)
                     }
                     (false, PanicLevelInput::PanicLevel(_)) => (),
                 }
@@ -168,21 +153,17 @@ impl Component for ResolutionPhase {
         }
     }
 
-    fn change(&mut self, props: Self::Properties) -> yew::ShouldRender {
-        self.prompt = props.starting_prompt;
-        self.alien_base_discovered = props.alien_base_discovered;
-        self.panic_level_input = PanicLevelInput::PanicLevel(props.panic_level.clone());
-        self.ufos_left_input = props.ufos_left;
-        self.on_completed = props.on_completed;
-        self.on_game_end = props.on_game_end;
+    fn changed(&mut self, ctx: &Context<Self>) -> bool {
+        self.prompt = ctx.props().starting_prompt.clone();
+        self.panic_level_input = PanicLevelInput::PanicLevel(ctx.props().panic_level.clone());
+        self.ufos_left_input = ctx.props().ufos_left;
         true
     }
 
-    fn view(&self) -> yew::Html {
-        let checkbox_ref = self.alien_base_destroyed_checkbox_ref.clone();
-        let panic_input_change_callback = self.link.batch_callback(|c: ChangeData| {
-            if let ChangeData::Value(val) = c {
-                if let Ok(panic_level_input) = PanicLevelInput::try_from(val.as_str()) {
+    fn view(&self, ctx: &Context<Self>) -> yew::Html {
+        let panic_input_change_callback = ctx.link().batch_callback(|e: Event| {
+            if let Some(element) = e.target_dyn_into::<HtmlInputElement>() {
+                if let Ok(panic_level_input) = PanicLevelInput::try_from(element.value().as_str()) {
                     return vec![Msg::UpdatePanicLevel(panic_level_input)];
                 }
             }
@@ -203,17 +184,17 @@ impl Component for ResolutionPhase {
                                             <input
                                                 class="panic-input-radio"
                                                 type="radio"
-                                                id=format!("panic-{}", input)
+                                                id={format!("panic-{}", input)}
                                                 name="panic-input"
-                                                value=input
-                                                onchange=panic_input_change_callback.clone()
-                                                checked=input == current_panic_level
+                                                value={input}
+                                                onchange={panic_input_change_callback.clone()}
+                                                checked={input == current_panic_level}
                                             />
                                             <label
                                                 class="panic-input-label"
-                                                for=format!("panic-{}", input)
+                                                for={format!("panic-{}", input)}
                                             >
-                                                <img src=format!("assets/icons/panic-input-{}.png", input)/>
+                                                <img src={format!("assets/icons/panic-input-{}.png", input)}/>
                                             </label>
                                         </>
                                     })
@@ -224,13 +205,13 @@ impl Component for ResolutionPhase {
                         <div>
                             <div class="board-input-title">{ "UFOs left on map:"} </div>
                             <div class="ufo-input-container">
-                                <button class="ufo-input-button" onclick=self.link.callback(|_| Msg::DecreaseUFOsLeft) disabled={self.ufos_left_input < 1}>{"-"}</button>
+                                <button class="ufo-input-button" onclick={ctx.link().callback(|_| Msg::DecreaseUFOsLeft)} disabled={self.ufos_left_input < 1}>{"-"}</button>
                                 <span class="ufo-input-text" >{ self.ufos_left_input }</span>
-                                <button class="ufo-input-button" onclick=self.link.callback(|_| Msg::IncreaseUFOsLeft) disabled={self.ufos_left_input > 17}>{"+"}</button>
+                                <button class="ufo-input-button" onclick={ctx.link().callback(|_| Msg::IncreaseUFOsLeft)} disabled={self.ufos_left_input > 17}>{"+"}</button>
                             </div>
                         </div>
                         {
-                            if self.alien_base_discovered {
+                            if ctx.props().alien_base_discovered {
                             html!{
                                 <div class="alien-base-destroyed-input-container">
                                     <label for="alien_base_destroyed_input">{ "Alien Base destroyed?" }</label>
@@ -238,14 +219,13 @@ impl Component for ResolutionPhase {
                                     class="alien-base-destroyed-input-checkbox"
                                         type="checkbox"
                                         name="alien_base_destroyed_input"
-                                        ref=self.alien_base_destroyed_checkbox_ref.clone()
-                                        checked=self.alien_base_destroyed_input
-                                        onchange=self.link.batch_callback(move |_: ChangeData| {
-                                            if let Some(input_element) = checkbox_ref.cast::<HtmlInputElement>() {
+                                        checked={self.alien_base_destroyed_input}
+                                        onchange={ctx.link().batch_callback(move |e: Event| {
+                                            if let Some(input_element) = e.target_dyn_into::<HtmlInputElement>() {
                                                 return vec![Msg::UpdateAlienBaseDestroyed(input_element.checked())];
                                             }
                                             return vec![];
-                                        })
+                                        })}
                                     />
                                 </div>
                                 }
@@ -262,12 +242,12 @@ impl Component for ResolutionPhase {
                     <div class="prompt-center-area">
                         <div class="side-buttons">
                         </div>
-                        <div class="prompt-details" ref=self.prompt_details_ref.clone()>
+                        <div class="prompt-details" ref={self.prompt_details_ref.clone()}>
                             <div class="prompt-icons">
                                 {icon_html_for_prompt(&self.prompt)}
                             </div>
                             <div class="prompt-description">
-                                {description_html_for_prompt(&self.prompt, self.alien_base_discovered)}
+                                {description_html_for_prompt(&self.prompt, ctx.props().alien_base_discovered)}
                             </div>
                         </div>
                     </div>
@@ -275,20 +255,20 @@ impl Component for ResolutionPhase {
             },
         };
         let next_callback = match self.prompt {
-            ResolutionPhasePrompt::AskForBoardState => self
-                .link
+            ResolutionPhasePrompt::AskForBoardState => ctx
+                .link()
                 .batch_callback(|_| vec![Msg::CheckGameEnd, Msg::NextPrompt]),
-            _ => self.link.callback(|_| Msg::NextPrompt),
+            _ => ctx.link().callback(|_| Msg::NextPrompt),
         };
         html! {
             <>
                 {main_section}
                 <div class="bottom-panel">
-                    <button class="button-back" onclick=self.link.callback(|_| Msg::PreviousPrompt) disabled={self.prompt.prev().is_none()}>{ "Back" }</button>
+                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={self.prompt.prev().is_none()}>{ "Back" }</button>
                     <div class="round">
-                        {format!("Round {}", self.round)}
+                        {format!("Round {}", ctx.props().round)}
                     </div>
-                    <button class="button-done" onclick=next_callback>{ "Done" }</button>
+                    <button class="button-done" onclick={next_callback}>{ "Done" }</button>
                 </div>
             </>
         }

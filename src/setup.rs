@@ -1,8 +1,6 @@
-use yew::{
-    html, web_sys::Element, Callback, Component, ComponentLink, MouseEvent, NodeRef, Properties,
-};
-
 use crate::common::inline_icon_text_phrase;
+use web_sys::Element;
+use yew::prelude::*;
 
 pub enum SetupStep {
     ListComponents,
@@ -62,8 +60,6 @@ pub struct SetupComponent {
     steps: Vec<SetupStep>,
     current_step_index: usize,
     prompt_details_ref: NodeRef,
-    link: ComponentLink<Self>,
-    props: Props,
 }
 
 impl Component for SetupComponent {
@@ -71,17 +67,15 @@ impl Component for SetupComponent {
 
     type Properties = Props;
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self {
             steps: SetupStep::get_all_steps(),
             current_step_index: 0,
             prompt_details_ref: NodeRef::default(),
-            link,
-            props,
         }
     }
 
-    fn update(&mut self, msg: Self::Message) -> yew::ShouldRender {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::NextPrompt => {
                 if self.current_step_index < self.steps.len() {
@@ -108,12 +102,11 @@ impl Component for SetupComponent {
         }
     }
 
-    fn change(&mut self, props: Self::Properties) -> yew::ShouldRender {
-        self.props = props;
+    fn changed(&mut self, _ctx: &Context<Self>) -> bool {
         false
     }
 
-    fn view(&self) -> yew::Html {
+    fn view(&self, ctx: &Context<Self>) -> yew::Html {
         if self.current_step_index == self.steps.len() {
             html! {
                 <>
@@ -124,8 +117,8 @@ impl Component for SetupComponent {
                         <p class="prompt-description">{"Your training is complete Commander, the real battle begins now. Good luck."}</p>
                     </div>
                     <div class="bottom-panel">
-                        <button class="button-back" onclick=self.link.callback(|_| Msg::PrevPrompt) disabled={ self.current_step_index < 1 }>{ "Back" }</button>
-                        <button class="button-done" onclick=self.props.on_completed.clone()>{ "Done" }</button>
+                        <button class="button-back" onclick={ctx.link().callback(|_| Msg::PrevPrompt)} disabled={ self.current_step_index < 1 }>{ "Back" }</button>
+                        <button class="button-done" onclick={ctx.props().on_completed.clone()}>{ "Done" }</button>
                     </div>
                 </>
             }
@@ -470,15 +463,15 @@ impl Component for SetupComponent {
                 <div class="prompt-center-area">
                     <div class="side-buttons">
                     </div>
-                    <div class="prompt-details" ref=self.prompt_details_ref.clone()>
+                    <div class="prompt-details" ref={self.prompt_details_ref.clone()}>
                         <div class="prompt-description">
                             {main}
                         </div>
                     </div>
                 </div>
                 <div class="bottom-panel">
-                    <button class="button-back" onclick=self.link.callback(|_| Msg::PrevPrompt) disabled={ self.current_step_index < 1 }>{ "Back" }</button>
-                    <button class="button-done" onclick=self.link.callback(|_| Msg::NextPrompt)>{ "Done" }</button>
+                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PrevPrompt)} disabled={ self.current_step_index < 1 }>{ "Back" }</button>
+                    <button class="button-done" onclick={ctx.link().callback(|_| Msg::NextPrompt)}>{ "Done" }</button>
                 </div>
                 </>
             }

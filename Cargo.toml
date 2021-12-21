@@ -7,11 +7,12 @@ edition = "2021"
 [workspace]
 
 [dependencies]
-yew = "0.18"
+yew = "0.19"
 rand = "0.8"
 indoc = "1.0"
 boolinator = "2.4"
 log = "0.4.6"
+web-sys = "0.3"
 js-sys = "0.3"
 gloo = "0.5"
 wasm-logger = "0.2.0"

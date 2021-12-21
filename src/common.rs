@@ -1,4 +1,4 @@
-use yew::{html, Html};
+use yew::prelude::*;
 
 pub fn inline_icon_text_phrase(icon: &str, title: &str) -> Html {
     // Ensure icon is attached to the first word in the phrase
@@ -8,7 +8,7 @@ pub fn inline_icon_text_phrase(icon: &str, title: &str) -> Html {
     html! {
         <span class="icon-text-phrase">
             <span style="display: inline-block;">
-            <img class="inline-icon" src=format!("assets/icons/{}.png", icon)/>
+            <img class="inline-icon" src={format!("assets/icons/{}.png", icon)}/>
             {format!(" {}", first_word)}
             </span>
             {

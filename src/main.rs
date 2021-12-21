@@ -52,7 +52,6 @@ struct Model {
     phase: Phase,
     game_state: GameState,
     resolution_phase_starting_prompt: ResolutionPhasePrompt,
-    link: ComponentLink<Self>,
 }
 enum Phase {
     MainMenu,
@@ -69,16 +68,15 @@ impl Component for Model {
 
     type Properties = ();
 
-    fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self {
             phase: Phase::MainMenu,
             game_state: GameState::new(),
             resolution_phase_starting_prompt: ResolutionPhasePrompt::start(),
-            link,
         }
     }
 
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::BeginSetup => {
                 self.phase = Phase::Setup;
@@ -143,11 +141,11 @@ impl Component for Model {
         }
     }
 
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
+    fn changed(&mut self, _ctx: &Context<Self>) -> bool {
         false
     }
 
-    fn view(&self) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
             <>
             <div class="main">
@@ -158,15 +156,15 @@ impl Component for Model {
                                 <div class="background-image prepare-screen" style="background-image: url(assets/background-art/alien-head.png)">
                                     <div class="prepare-screen-text">{ "X-1C" }</div>
                                     <div class="prepare-screen-button-container">
-                                        <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::BeginSetup)> {"Instructions"}</button>
-                                        <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::BeginGame)> {"Quick Start"}</button>
+                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::BeginSetup)}> {"Instructions"}</button>
+                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::BeginGame)}> {"Quick Start"}</button>
                                     </div>
                                 </div>
                             }
                         }
                         Phase::Setup => {
                             html!{
-                                <SetupComponent on_completed=self.link.callback(|_| Msg::BeginGame)/>
+                                <SetupComponent on_completed={ctx.link().callback(|_| Msg::BeginGame)}/>
                             }
                         }
                         Phase::PrepareForTimedPhase => {
@@ -174,7 +172,7 @@ impl Component for Model {
                                 <div class="background-image prepare-screen" style="background-image: url(assets/background-art/ufos-with-sunset.png)">
                                     <div class="prepare-screen-text">{ "Prepare for Timed Phase" }</div>
                                     <div class="prepare-screen-button-container">
-                                        <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::EnterTimedPhase)> {"Enter Timed Phase"}</button>
+                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::EnterTimedPhase)}> {"Enter Timed Phase"}</button>
                                     </div>
                                 </div>
                             }
@@ -183,9 +181,9 @@ impl Component for Model {
                             html! {
                                 <TimedPhase
                                     prompts={prompts.clone()}
-                                    round=self.game_state.round
-                                    on_completed=self.link.callback(|_| Msg::TimedPhaseCompleted)
-                                    on_alien_base_discovered=self.link.callback(|_| Msg::AlienBaseDiscovered)
+                                    round={self.game_state.round}
+                                    on_completed={ctx.link().callback(|_| Msg::TimedPhaseCompleted)}
+                                    on_alien_base_discovered={ctx.link().callback(|_| Msg::AlienBaseDiscovered)}
                                 />
                             }
                         },
@@ -195,7 +193,7 @@ impl Component for Model {
                                 <div class="background-image prepare-screen" style="background-image: url(assets/background-art/ufos-over-city.png)">
                                     <div class="prepare-screen-text">{ "Prepare for Resolution Phase" }</div>
                                     <div class="prepare-screen-button-container">
-                                        <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::EnterResolutionPhase)> {"Enter Resolution Phase"}</button>
+                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::EnterResolutionPhase)}> {"Enter Resolution Phase"}</button>
                                     </div>
                                 </div>
                             }
@@ -203,26 +201,26 @@ impl Component for Model {
                         Phase::ResolutionPhase => {
                             html! {
                                 <ResolutionPhase
-                                    starting_prompt=self.resolution_phase_starting_prompt.clone()
-                                    panic_level=self.game_state.panic_level.clone()
-                                    ufos_left=self.game_state.ufos_left
-                                    alien_base_discovered=self.game_state.alien_base_discovered
-                                    round=self.game_state.round
-                                    on_completed=self.link.callback(|(panic_level, ufos_left)| Msg::ResolutionPhaseCompleted {
+                                    starting_prompt={self.resolution_phase_starting_prompt.clone()}
+                                    panic_level={self.game_state.panic_level.clone()}
+                                    ufos_left={self.game_state.ufos_left}
+                                    alien_base_discovered={self.game_state.alien_base_discovered}
+                                    round={self.game_state.round}
+                                    on_completed={ctx.link().callback(|(panic_level, ufos_left)| Msg::ResolutionPhaseCompleted {
                                         panic_level,
                                         ufos_left,
-                                    })
-                                    on_game_end=self.link.callback(|result| Msg::GameCompleted(result))
+                                    })}
+                                    on_game_end={ctx.link().callback(|result| Msg::GameCompleted(result))}
                                 />
                             }
                         },
                         Phase::GameCompleted(ref result) => {
                             html!{
-                                <div class="background-image prepare-screen" style=format!("background-image: url({})", image_for_result(result))>
+                                <div class="background-image prepare-screen" style={format!("background-image: url({})", image_for_result(result))}>
                                     <div class="prepare-screen-text">{ format!("{}", result) }</div>
                                     <div class="prepare-screen-button-container">
-                                        <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::UndoGameCompleted) >{ "Back" }</button>
-                                        <button class="prepare-screen-button button-shadow" onclick=self.link.callback(|_| Msg::ReturnToMainMenu) >{ "Quit" }</button>
+                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::UndoGameCompleted)} >{ "Back" }</button>
+                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::ReturnToMainMenu)} >{ "Quit" }</button>
                                     </div>
                                 </div>
                             }

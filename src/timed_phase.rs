@@ -1,8 +1,9 @@
 use crate::common::inline_icon_text_phrase;
 use boolinator::Boolinator;
 use gloo::timers::callback::Interval;
+use web_sys::Element;
 use xcom_1_card::TimedPhasePrompt;
-use yew::{prelude::*, web_sys::Element};
+use yew::prelude::*;
 
 pub enum Msg {
     NextPrompt,
@@ -11,13 +12,11 @@ pub enum Msg {
 }
 
 pub struct TimedPhase {
-    link: ComponentLink<Self>,
     current_prompt_index: usize,
     latest_prompt_index: usize,
     time_remaining_ms: f64,
     last_tick_time: f64,
     tick_interval: Interval,
-    props: TimedPhaseProps,
     prompt_details_ref: NodeRef,
 }
 
@@ -33,32 +32,30 @@ impl Component for TimedPhase {
     type Message = Msg;
     type Properties = TimedPhaseProps;
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
         let tick_interval = {
-            let link = link.clone();
+            let link = ctx.link().clone();
             Interval::new(87, move || link.send_message(Msg::Tick))
         };
         Self {
-            link,
             current_prompt_index: 0,
             latest_prompt_index: 0,
             time_remaining_ms: 15_000.0,
             last_tick_time: js_sys::Date::now(),
             tick_interval,
-            props,
             prompt_details_ref: NodeRef::default(),
         }
     }
 
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::NextPrompt => {
-                if (self.current_prompt_index + 1) <= self.props.prompts.len() {
+                if (self.current_prompt_index + 1) <= ctx.props().prompts.len() {
                     if matches!(
-                        self.props.prompts[self.current_prompt_index],
+                        ctx.props().prompts[self.current_prompt_index],
                         TimedPhasePrompt::AlienBaseDiscovered(_)
                     ) {
-                        self.props.on_alien_base_discovered.emit(());
+                        ctx.props().on_alien_base_discovered.emit(());
                     }
                     if self.current_prompt_index + 1 > self.latest_prompt_index {
                         self.latest_prompt_index = self.current_prompt_index + 1;
@@ -95,37 +92,32 @@ impl Component for TimedPhase {
         }
     }
 
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        if self.props != props {
-            self.props = props;
-            true
-        } else {
-            false
-        }
+    fn changed(&mut self, _ctx: &Context<Self>) -> bool {
+        true
     }
 
-    fn view(&self) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
         let (title, next_callback, icons_html, description) = if self.current_prompt_index
-            == self.props.prompts.len()
+            == ctx.props().prompts.len()
         {
             (
                 "Completing Timed Phase".to_owned(),
-                self.props.on_completed.clone(),
+                ctx.props().on_completed.clone(),
                 html! {
                     <img class="prompt-icon" src="assets/icons/time.png"/>
                 },
                 html! {
                     <>
-                        {"This is a final chance to use "}{inline_icon_text_phrase("time", "Timed Phase")}{" "}{inline_icon_text_phrase("tech", "Technology")}{" or to use "}{inline_icon_text_phrase("satellite", "Satellites")}{" to adjust deployment of your "}{{inline_icon_text_phrase("interceptor", "Interceptors.")}}
+                        {"This is a final chance to use "}{inline_icon_text_phrase("time", "Timed Phase")}{" "}{inline_icon_text_phrase("tech", "Technology")}{" or to use "}{inline_icon_text_phrase("satellite", "Satellites")}{" to adjust deployment of your "}{inline_icon_text_phrase("interceptor", "Interceptors.")}
                     </>
                 },
             )
         } else {
             (
-                self.props.prompts[self.current_prompt_index].title(),
-                self.link.callback(|_| Msg::NextPrompt),
-                icon_html_for_prompt(&self.props.prompts[self.current_prompt_index]),
-                description_html_for_prompt(&self.props.prompts[self.current_prompt_index]),
+                ctx.props().prompts[self.current_prompt_index].title(),
+                ctx.link().callback(|_| Msg::NextPrompt),
+                icon_html_for_prompt(&ctx.props().prompts[self.current_prompt_index]),
+                description_html_for_prompt(&ctx.props().prompts[self.current_prompt_index]),
             )
         };
         let time_s = (self.time_remaining_ms / 1000.0).floor();
@@ -136,7 +128,7 @@ impl Component for TimedPhase {
                 <div class="prompt-center-area">
                     <div class="side-buttons">
                     </div>
-                    <div class="prompt-details" ref=self.prompt_details_ref.clone()>
+                    <div class="prompt-details" ref={self.prompt_details_ref.clone()}>
                         <div class="prompt-icons">
                             {icons_html}
                         </div>
@@ -148,12 +140,12 @@ impl Component for TimedPhase {
                     </div>
                 </div>
                 <div class="bottom-panel">
-                    <button class="button-back" onclick=self.link.callback(|_| Msg::PreviousPrompt) disabled={ self.current_prompt_index < 1 }>{ "Back" }</button>
+                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={ self.current_prompt_index < 1 }>{ "Back" }</button>
                     <div>
-                        <div class="round">{format!("Round {}", self.props.round)}</div>
-                        <div class=classes!("timer", (time_s < 5.0).as_some("blink-red"))>{ format!("{:3.0}:{:02.0}", time_s, time_ms) }</div>
+                        <div class="round">{format!("Round {}", ctx.props().round)}</div>
+                        <div class={classes!("timer", (time_s < 5.0).as_some("blink-red"))}>{ format!("{:3.0}:{:02.0}", time_s, time_ms) }</div>
                     </div>
-                    <button class="button-done" onclick=next_callback>{ "Done" }</button>
+                    <button class="button-done" onclick={next_callback}>{ "Done" }</button>
                 </div>
             </>
         }
@@ -170,7 +162,7 @@ fn icon_html_for_prompt(prompt: &TimedPhasePrompt) -> Html {
                 <img class="prompt-icon" src="assets/icons/roll.png"/>
                 <div class="prompt-icon">
                     <img class="alien-dice-back" src="assets/icons/ufo.png"/>
-                    <img class="continent-location" src=format!("assets/icons/{}-board-position.png", continent.lowercase())/>
+                    <img class="continent-location" src={format!("assets/icons/{}-board-position.png", continent.lowercase())}/>
                 </div>
             </>
         },
@@ -185,7 +177,7 @@ fn icon_html_for_prompt(prompt: &TimedPhasePrompt) -> Html {
                 }/>
                 <div class="prompt-icon">
                     <img class="alien-dice-back" src="assets/icons/ufo.png"/>
-                    <img class="continent-location" src=format!("assets/icons/{}-board-position.png", continent.lowercase())/>
+                    <img class="continent-location" src={format!("assets/icons/{}-board-position.png", continent.lowercase())}/>
                 </div>
             </>
         },
@@ -193,12 +185,12 @@ fn icon_html_for_prompt(prompt: &TimedPhasePrompt) -> Html {
             <>
                 <div class="prompt-icon">
                     <img class="alien-dice-back" src="assets/icons/ufo.png"/>
-                    <img class="continent-location" src=format!("assets/icons/{}-board-position.png", from.lowercase())/>
+                    <img class="continent-location" src={format!("assets/icons/{}-board-position.png", from.lowercase())}/>
                 </div>
                 <img class="prompt-icon" src="assets/icons/swap.png"/>
                 <div class="prompt-icon">
                     <img class="alien-dice-back" src="assets/icons/ufo.png"/>
-                    <img class="continent-location" src=format!("assets/icons/{}-board-position.png", to.lowercase())/>
+                    <img class="continent-location" src={format!("assets/icons/{}-board-position.png", to.lowercase())}/>
                 </div>
             </>
         },
@@ -208,13 +200,13 @@ fn icon_html_for_prompt(prompt: &TimedPhasePrompt) -> Html {
         TimedPhasePrompt::AssignInterceptors(continent) => html! {
             <div class="prompt-icon">
                 <img  src="assets/icons/interceptor.png"/>
-                <img class="continent-location" src=format!("assets/icons/{}-board-position.png", continent.lowercase())/>
+                <img class="continent-location" src={format!("assets/icons/{}-board-position.png", continent.lowercase())}/>
             </div>
         },
         TimedPhasePrompt::AlienBaseDiscovered(continent) => html! {
             <div class="prompt-icon">
                 <img  src="assets/icons/alien-base.png"/>
-                <img class="continent-location" src=format!("assets/icons/{}-board-position.png", continent.lowercase())/>
+                <img class="continent-location" src={format!("assets/icons/{}-board-position.png", continent.lowercase())}/>
             </div>
         },
     }
