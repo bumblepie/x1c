@@ -47,6 +47,7 @@ pub struct ResolutionPhase {
     panic_level_input: PanicLevelInput,
     ufos_left_input: u32,
     alien_base_destroyed_input: bool,
+    round: u32,
     link: ComponentLink<Self>,
     alien_base_destroyed_checkbox_ref: NodeRef,
     prompt_details_ref: NodeRef,
@@ -69,6 +70,7 @@ pub struct Props {
     pub panic_level: PanicLevel,
     pub ufos_left: u32,
     pub alien_base_discovered: bool,
+    pub round: u32,
     pub on_completed: Callback<(PanicLevel, u32)>,
     pub on_game_end: Callback<GameResult>,
     #[prop_or_else(ResolutionPhasePrompt::start)]
@@ -84,6 +86,7 @@ impl Component for ResolutionPhase {
         Self {
             prompt: props.starting_prompt,
             alien_base_discovered: props.alien_base_discovered,
+            round: props.round,
             panic_level_input: PanicLevelInput::PanicLevel(props.panic_level.clone()),
             ufos_left_input: props.ufos_left,
             alien_base_destroyed_input: false,
@@ -282,6 +285,9 @@ impl Component for ResolutionPhase {
                 {main_section}
                 <div class="bottom-panel">
                     <button class="button-back" onclick=self.link.callback(|_| Msg::PreviousPrompt) disabled={self.prompt.prev().is_none()}>{ "Back" }</button>
+                    <div class="round">
+                        {format!("Round {}", self.round)}
+                    </div>
                     <button class="button-done" onclick=next_callback>{ "Done" }</button>
                 </div>
             </>

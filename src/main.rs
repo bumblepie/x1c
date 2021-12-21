@@ -183,6 +183,7 @@ impl Component for Model {
                             html! {
                                 <TimedPhase
                                     prompts={prompts.clone()}
+                                    round=self.game_state.round
                                     on_completed=self.link.callback(|_| Msg::TimedPhaseCompleted)
                                     on_alien_base_discovered=self.link.callback(|_| Msg::AlienBaseDiscovered)
                                 />
@@ -206,6 +207,7 @@ impl Component for Model {
                                     panic_level=self.game_state.panic_level.clone()
                                     ufos_left=self.game_state.ufos_left
                                     alien_base_discovered=self.game_state.alien_base_discovered
+                                    round=self.game_state.round
                                     on_completed=self.link.callback(|(panic_level, ufos_left)| Msg::ResolutionPhaseCompleted {
                                         panic_level,
                                         ufos_left,

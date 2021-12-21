@@ -70,6 +70,11 @@ img {
     margin: 1em;
 }
 
+.round {
+    font-size: x-large;
+    text-align: center;
+}
+
 .timer {
     font-size: x-large;
     font-family: 'Moby', 'Courier New', Courier, monospace;

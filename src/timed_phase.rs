@@ -24,6 +24,7 @@ pub struct TimedPhase {
 #[derive(Debug, Clone, PartialEq, Properties)]
 pub struct TimedPhaseProps {
     pub prompts: Vec<TimedPhasePrompt>,
+    pub round: u32,
     pub on_completed: Callback<MouseEvent>,
     pub on_alien_base_discovered: Callback<()>,
 }
@@ -148,7 +149,10 @@ impl Component for TimedPhase {
                 </div>
                 <div class="bottom-panel">
                     <button class="button-back" onclick=self.link.callback(|_| Msg::PreviousPrompt) disabled={ self.current_prompt_index < 1 }>{ "Back" }</button>
-                    <span class=classes!("timer", (time_s < 5.0).as_some("blink-red"))>{ format!("{:3.0}:{:02.0}", time_s, time_ms) }</span>
+                    <div>
+                        <div class="round">{format!("Round {}", self.props.round)}</div>
+                        <div class=classes!("timer", (time_s < 5.0).as_some("blink-red"))>{ format!("{:3.0}:{:02.0}", time_s, time_ms) }</div>
+                    </div>
                     <button class="button-done" onclick=next_callback>{ "Done" }</button>
                 </div>
             </>
