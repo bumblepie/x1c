@@ -353,3 +353,9 @@ input[type="checkbox"]:checked::before {
 ul {
     padding-left: 1em;
 }
+
+.vertical-image {
+    max-width: 400px;
+    margin: auto;
+    display: block;
+}

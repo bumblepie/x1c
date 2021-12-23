@@ -219,6 +219,7 @@ impl Component for SetupComponent {
                             <p>
                                 <b>{"Place the "}{inline_icon_text_phrase("panic", "Panic marker")}{" on the first space of the "}{inline_icon_text_phrase("panic", "Panic Track")}{":"}</b>
                             </p>
+                            <img src="assets/instruction-examples/panic.png"/>
                             <p>
                                 {"This represents the current "}{inline_icon_text_phrase("panic", "Global Panic Level.")}
                             </p>
@@ -235,8 +236,9 @@ impl Component for SetupComponent {
                             <p>
                                 <b>{"Set aside 5 credit tokens to form your funds."}</b>
                             </p>
+                            <img src="assets/instruction-examples/funds.png"/>
                             <p>
-                                {"Each round during the "}{inline_icon_text_phrase("time", "Timed Phase,")}{" you will gain additional funds."}
+                                {"Each round you will gain additional funds during the "}{inline_icon_text_phrase("time", "Timed Phase.")}
                             </p>
                             <p>
                                 {"When you deploy "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" and put points in your "}{inline_icon_text_phrase("research", "Research Budget")}{" during the "}{inline_icon_text_phrase("time", "Timed Phase,")}{" it will cost you credits during the "}{inline_icon_text_phrase("resolution", "Resolution Phase.")}{" If you are unable to pay, the "}{inline_icon_text_phrase("panic", "Global Panic Level")}{" will increase, so be careful not to overspend."}
@@ -254,6 +256,7 @@ impl Component for SetupComponent {
                             <p>
                                 {"In the center of the main card, you will find the World Map. This will be the theatre in which humanity's struggle for survival will be played out:"}
                             </p>
+                            <img src="assets/instruction-examples/world-map.png"/>
                             <p>
                                 {"There are three continents of interest: America, Africa and Eurasia. Each of these has a square in which a UFO die can be placed, and a set of four smaller squares to which your "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" can be deployed."}
                             </p>
@@ -265,13 +268,17 @@ impl Component for SetupComponent {
                     html! {
                         <>
                             <p>
-                                {"During the "}{inline_icon_text_phrase("time", "Timed Phase,")}{" UFOs will descend from orbit and move around the world map. To signify how many UFOs are over each continent, we use a UFO die (a D6) in the appropriate space."}
+                                {"During the "}{inline_icon_text_phrase("time", "Timed Phase,")}{" UFOs will descend from orbit and move around the world map. To signify how many UFOs are over each continent, a UFO die (a D6) is placed in the appropriate space."}
                             </p>
+                            <img src="assets/instruction-examples/ufos.png"/>
                             <p>
                                 {"You will usually roll the die for a continent to determine how many UFOs initially approach the continent."}
                             </p>
                             <p>
-                                {"You may also be asked to increase the number of UFOs in a continent. To do this, turn the die to show the new number of UFOs. Similarly, when your "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" shoot down UFOs, turn the die to show the number of remaining UFOs."}
+                                {"You may also be asked to increase the number of UFOs in a continent. To do this, turn the die to show the new number of UFOs. "}
+                            </p>
+                            <p>
+                                {"Similarly, when your "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" shoot down UFOs, turn the die to show the number of remaining UFOs."}
                             </p>
                         </>
                     },
@@ -290,7 +297,7 @@ impl Component for SetupComponent {
                                 {"When asked to roll the UFO die for a continent which contains UFOs, move as many of those UFOs  as possible to the other continents before rolling the die. If both other continents are already full or are filled by doing this, ignore any remaining UFOs which cannot be moved - do not re-add them to the continent after rolling the die."}
                             </p>
                             <p>
-                                {"When asked to increase the number of UFOs for a continent which contains no UFOs, just add a UFO die to the space set to the number of UFOs requested."}
+                                {"When asked to increase the number of UFOs for a continent which contains no UFOs, just add a UFO die to the space and set it to the number of UFOs requested."}
                             </p>
                         </>
                     },
@@ -302,6 +309,7 @@ impl Component for SetupComponent {
                             <p>
                                 <b>{"Place the "}{inline_icon_text_phrase("alien", "Alien Threat marker")}{" on the first space of the "}{inline_icon_text_phrase("alien", "Alien Threat Track:")}</b>
                             </p>
+                            <img src="assets/instruction-examples/alien-threat.png"/>
                             <p>
                                 {"This is used to track the increasing danger as you attempt and re-attempt tasks."}
                             </p>
@@ -345,12 +353,14 @@ impl Component for SetupComponent {
                                     {"Set aside 8 "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" to form your reserves:"}
                                 </b>
                             </p>
+                            <img src="assets/instruction-examples/reserves.png"/>
                             <p>
                                 {"Your reserves contain your "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" that are ready to be deployed - as the game goes on, you might lose "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" that are shot down by UFOs. If this happens, you'll need to pay credits (§1 each) to build replacements."}
                             </p>
                             <p>
                                 {"As well as a space for the UFO dice, the continents have spaces to deploy "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" to combat the UFOs:"}
                             </p>
+                            <img src="assets/instruction-examples/interceptors.png"/>
                             <p>
                                 {"You choose how many "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" to deploy to each continent during the "}{inline_icon_text_phrase("time", "Timed Phase.")}{" Deploying "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" will cost §1 each from your funds."}
                             </p>
@@ -365,10 +375,18 @@ impl Component for SetupComponent {
                                 {"During the "}{inline_icon_text_phrase("resolution", "Resolution Phase,")}{" deployed "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" will have a chance to shoot down the UFOs via the UFO Defense task - the more interceptors assigned, the more "}{inline_icon_text_phrase("success", "Success Dice")}{" you roll each attempt."}
                             </p>
                             <p>
+                                {"The consequence of the "}{inline_icon_text_phrase("alien", "Alien Threat")}{" during the "}{inline_icon_text_phrase("interceptor", "UFO Defense Task")}{" is that the UFOs destroy half of your "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" (rounded up), returning them to the supply rather than your reserves. You can continue rolling against the task, but you'll do so with less firepower and the "}{inline_icon_text_phrase("alien", "Alien Threat")}{" will continue to increase."}
+                            </p>
+                            <p>
                                 {"Any remaining UFOs in a continent will increase "}{inline_icon_text_phrase("panic", "Global Panic")}{" and scramble our communications, making the prompts in the next "}{inline_icon_text_phrase("time", "Timed Phase")}{" come out of order."}
                             </p>
                             <p>
-                                {"The consequence of the "}{inline_icon_text_phrase("alien", "Alien Threat")}{" during the "}{inline_icon_text_phrase("interceptor", "UFO Defense Task")}{" is that the UFOs destroy half of your "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" (rounded up), returning them to the supply rather than your reserves. You can continue rolling against the task, but you'll do so with less firepower and the "}{inline_icon_text_phrase("alien", "Alien Threat")}{" will continue to increase."}
+                                {"However, each continent that is completely free from UFOs after "}{inline_icon_text_phrase("interceptor", "UFO Defense")}{" is able to focus their nations' efforts and gives you a special bonus:"}
+                                <ul>
+                                    <li>{"America lets you rebuild a"}{inline_icon_text_phrase("satellite", "Satellite")}{" and "}{inline_icon_text_phrase("interceptor", "Interceptor")}{" for free."}</li>
+                                    <li>{"Africa gives you additional funding."}</li>
+                                    <li>{"Eurasia gives you bonus progress towards "}{inline_icon_text_phrase("research", "Researching")}{" "}{inline_icon_text_phrase("tech", "Technology.")}</li>
+                                </ul>
                             </p>
                         </>
                     },
@@ -382,6 +400,7 @@ impl Component for SetupComponent {
                                     {"Place the "}{inline_icon_text_phrase("research", "Research Budget marker")}{" at the zero space at the bottom of the "}{inline_icon_text_phrase("research", "Research Budget Track:")}
                                 </b>
                             </p>
+                            <img class="vertical-image" src="assets/instruction-examples/research.png"/>
                             <p>
                                 {"This represents your investment into researching "}{inline_icon_text_phrase("tech", "Alien Technology.")}{" Each "}{inline_icon_text_phrase("tech", "Technology")}{" gives a special power that can be used once during each round for no cost."}
                             </p>
@@ -392,7 +411,7 @@ impl Component for SetupComponent {
                     },
                 ),
                 SetupStep::ResearchTask => (
-                    "Research",
+                    "Research and Technology",
                     html! {
                         <>
                             <p>
@@ -405,7 +424,7 @@ impl Component for SetupComponent {
                                 {"Be careful though, the consequence of the "}{inline_icon_text_phrase("alien", "Alien Threat")}{" during the "}{inline_icon_text_phrase("research", "Research Task")}{" is that the volatile "}{inline_icon_text_phrase("tech", "Alien Technology")}{" explodes, removing it from the game permanently!"}
                             </p>
                             <p>
-                                {"If you choose to stop rolling before completely researching a "}{inline_icon_text_phrase("tech", "Technology,")}{" any success tokens will stay on the chosen technology. If you choose to start researching a different "}{inline_icon_text_phrase("tech", "Technology")}{" however, discard any "}{inline_icon_text_phrase("success", "Success Tokens")}{" on the "}{inline_icon_text_phrase("tech", "Technology")}{" that you are no longer researching."}
+                                {"If you choose to stop rolling before completely researching a "}{inline_icon_text_phrase("tech", "Technology,")}{" any success tokens earned will stay on the chosen technology. If you choose to start researching a different "}{inline_icon_text_phrase("tech", "Technology")}{" however, discard any "}{inline_icon_text_phrase("success", "Success Tokens")}{" on the "}{inline_icon_text_phrase("tech", "Technology")}{" that you are no longer researching."}
                             </p>
                         </>
                     },
@@ -417,6 +436,7 @@ impl Component for SetupComponent {
                             <p>
                                 {"Each "}{inline_icon_text_phrase("tech", "Technology")}{" has a unique effect and can only be used once per round, either in the "}{inline_icon_text_phrase("time", "Timed Phase")}{" or in the "}{inline_icon_text_phrase("resolution", "Resolution Phase")}{" as indicated on its token."}
                             </p>
+                            <img src="assets/instruction-examples/tech-explanation.png"/>
                             <p>
                                 {"After using a "}{inline_icon_text_phrase("tech", "Technology")}{" you have researched, flip the "}{inline_icon_text_phrase("tech", "Technology token")}{" to the other side to show it has been used."}
                             </p>
@@ -432,9 +452,10 @@ impl Component for SetupComponent {
                         <>
                             <p>
                                 <b>
-                                    {"Place the "}{inline_icon_text_phrase("satellite", "Satellite marker")}{" at the three space at the top of the "}{inline_icon_text_phrase("satellite", "Satellite Track:")}
+                                    {"Place the "}{inline_icon_text_phrase("satellite", "Satellite marker")}{" at the third space at the top of the "}{inline_icon_text_phrase("satellite", "Satellite Track:")}
                                 </b>
                             </p>
+                            <img class="vertical-image" src="assets/instruction-examples/satellites.png"/>
                             <p>
                                 {"Your "}{inline_icon_text_phrase("satellite", "Satellites")}{" are powerful tools to help you manage your situation. At any point during the "}{inline_icon_text_phrase("time", "Timed Phase")}{"you can spend a "}{inline_icon_text_phrase("satellite", "Satellite,")}{" moving the "}{inline_icon_text_phrase("satellite", "Satellite marker")}{" down one space, to either:"}
                             </p>
