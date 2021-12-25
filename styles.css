@@ -21,7 +21,7 @@
 body {
     padding: 0;
     margin: 0;
-    background-color: #282a36;
+    background-color: #222222;
     color: #f8f8f2;
     font-family: Bombadier, Verdana, Geneva, Tahoma, sans-serif;
 }
@@ -38,6 +38,7 @@ img {
     display: flex;
     flex-direction: column;
     margin: auto;
+    background-color: #282a36;
 }
 
 .prompt-title {
@@ -49,6 +50,7 @@ img {
     display: grid;
     grid-template-columns: 1fr 6fr 1fr;
     overflow: hidden;
+    gap: 10px;
 }
 
 .prompt-icons {
@@ -358,4 +360,60 @@ ul {
     max-width: 400px;
     margin: auto;
     display: block;
+}
+
+.side-buttons {
+    display: flex;
+    flex-direction: column;
+}
+
+.side-button-tech {
+    background-color: #ffb86c;
+    border-top-right-radius: 10%;
+    border-bottom-right-radius: 10%;
+}
+
+.side-button-tech:hover {
+    background-color: #ffca9c;
+}
+
+.side-button-tech:active {
+    background-color: #fda600;
+    color: #c0c0ba;
+}
+
+.tech-ref-container {
+    overflow-y: auto;
+    background-color: #3a3c48;
+    border-color: #fda600;
+    border-width: 2px;
+    border-style: solid;
+    padding: 10px;
+}
+
+.tech-ref-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+
+.tech-icon {
+    box-shadow: 0 8px 8px -4px #282a36;
+    border-color: #282a36;
+    border-width: 2px;
+    border-style: solid;
+}
+
+.tech-icon.selected {
+    border-color: #929ac5;
+}
+
+.tech-title {
+    font-size: x-large;
+}
+
+.tech-description {
+    font-size: medium;
+    text-align: justify;
+    line-height: 1.8em;
 }

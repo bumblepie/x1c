@@ -1,4 +1,5 @@
-use crate::common::inline_icon_text_phrase;
+use crate::common::{inline_icon_text_phrase, side_buttons};
+use crate::tech_reference::TechReference;
 use boolinator::Boolinator;
 use gloo::timers::callback::Interval;
 use web_sys::Element;
@@ -9,6 +10,7 @@ pub enum Msg {
     NextPrompt,
     PreviousPrompt,
     Tick,
+    ToggleTech,
 }
 
 pub struct TimedPhase {
@@ -17,6 +19,7 @@ pub struct TimedPhase {
     time_remaining_ms: f64,
     last_tick_time: f64,
     tick_interval: Interval,
+    show_tech: bool,
     prompt_details_ref: NodeRef,
 }
 
@@ -43,6 +46,7 @@ impl Component for TimedPhase {
             time_remaining_ms: 15_000.0,
             last_tick_time: js_sys::Date::now(),
             tick_interval,
+            show_tech: false,
             prompt_details_ref: NodeRef::default(),
         }
     }
@@ -85,8 +89,14 @@ impl Component for TimedPhase {
             Msg::Tick => {
                 let next_tick_time = js_sys::Date::now();
                 let diff = next_tick_time - self.last_tick_time;
-                self.time_remaining_ms = f64::max(self.time_remaining_ms - diff, 0.0);
+                if !self.show_tech {
+                    self.time_remaining_ms = f64::max(self.time_remaining_ms - diff, 0.0);
+                }
                 self.last_tick_time = next_tick_time;
+                true
+            }
+            Msg::ToggleTech => {
+                self.show_tech = !self.show_tech;
                 true
             }
         }
@@ -126,26 +136,37 @@ impl Component for TimedPhase {
             <>
                 <h1 class="prompt-title">{ title }</h1>
                 <div class="prompt-center-area">
-                    <div class="side-buttons">
-                    </div>
-                    <div class="prompt-details" ref={self.prompt_details_ref.clone()}>
-                        <div class="prompt-icons">
-                            {icons_html}
-                        </div>
-                        <div class="prompt-description">
-                            {description}
-                        </div>
-                    </div>
+                    {side_buttons(ctx.link().callback(|_| Msg::ToggleTech))}
+                    {
+                        if self.show_tech {
+                            html!{
+                                <div class="tech-ref-container">
+                                    <TechReference/>
+                                </div>
+                            }
+                        } else {
+                            html!{
+                                <div class="prompt-details" ref={self.prompt_details_ref.clone()}>
+                                    <div class="prompt-icons">
+                                        {icons_html}
+                                    </div>
+                                    <div class="prompt-description">
+                                        {description}
+                                    </div>
+                                </div>
+                            }
+                        }
+                    }
                     <div class="timed-phase-prompt-preview">
                     </div>
                 </div>
                 <div class="bottom-panel">
-                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={ self.current_prompt_index < 1 }>{ "Back" }</button>
+                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={ self.show_tech || self.current_prompt_index < 1 }>{ "Back" }</button>
                     <div>
                         <div class="round">{format!("Round {}", ctx.props().round)}</div>
                         <div class={classes!("timer", (time_s < 5.0).as_some("blink-red"))}>{ format!("{:3.0}:{:02.0}", time_s, time_ms) }</div>
                     </div>
-                    <button class="button-done" onclick={next_callback}>{ "Done" }</button>
+                    <button class="button-done" onclick={next_callback} disabled={ self.show_tech }>{ "Done" }</button>
                 </div>
             </>
         }

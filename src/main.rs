@@ -1,6 +1,7 @@
 mod common;
 mod resolution_phase;
 mod setup;
+mod tech_reference;
 mod timed_phase;
 
 use resolution_phase::ResolutionPhase;

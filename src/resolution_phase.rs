@@ -2,7 +2,8 @@ use web_sys::{Element, HtmlInputElement};
 use xcom_1_card::{GameResult, PanicLevel, ResolutionPhasePrompt};
 use yew::prelude::*;
 
-use crate::common::inline_icon_text_phrase;
+use crate::common::{inline_icon_text_phrase, side_buttons};
+use crate::tech_reference::TechReference;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PanicLevelInput {
@@ -43,6 +44,7 @@ pub struct ResolutionPhase {
     panic_level_input: PanicLevelInput,
     ufos_left_input: u32,
     alien_base_destroyed_input: bool,
+    show_tech: bool,
     prompt_details_ref: NodeRef,
 }
 
@@ -54,6 +56,7 @@ pub enum Msg {
     DecreaseUFOsLeft,
     UpdateAlienBaseDestroyed(bool),
     CheckGameEnd,
+    ToggleTech,
 }
 
 #[derive(Debug, Clone, PartialEq, Properties)]
@@ -79,6 +82,7 @@ impl Component for ResolutionPhase {
             panic_level_input: PanicLevelInput::PanicLevel(ctx.props().panic_level.clone()),
             ufos_left_input: ctx.props().ufos_left,
             alien_base_destroyed_input: false,
+            show_tech: false,
             prompt_details_ref: NodeRef::default(),
         }
     }
@@ -149,6 +153,10 @@ impl Component for ResolutionPhase {
                     (false, PanicLevelInput::PanicLevel(_)) => (),
                 }
                 false
+            }
+            Msg::ToggleTech => {
+                self.show_tech = !self.show_tech;
+                true
             }
         }
     }
@@ -240,16 +248,27 @@ impl Component for ResolutionPhase {
                 <>
                     <h1 class="prompt-title">{ self.prompt.title() }</h1>
                     <div class="prompt-center-area">
-                        <div class="side-buttons">
-                        </div>
-                        <div class="prompt-details" ref={self.prompt_details_ref.clone()}>
-                            <div class="prompt-icons">
-                                {icon_html_for_prompt(&self.prompt)}
-                            </div>
-                            <div class="prompt-description">
-                                {description_html_for_prompt(&self.prompt, ctx.props().alien_base_discovered)}
-                            </div>
-                        </div>
+                        {side_buttons(ctx.link().callback(|_| Msg::ToggleTech))}
+                        {
+                            if self.show_tech {
+                                html!{
+                                    <div class="tech-ref-container">
+                                        <TechReference/>
+                                    </div>
+                                }
+                            } else {
+                                html!{
+                                    <div class="prompt-details" ref={self.prompt_details_ref.clone()}>
+                                        <div class="prompt-icons">
+                                            {icon_html_for_prompt(&self.prompt)}
+                                        </div>
+                                        <div class="prompt-description">
+                                            {description_html_for_prompt(&self.prompt, ctx.props().alien_base_discovered)}
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        }
                     </div>
                 </>
             },
@@ -264,11 +283,11 @@ impl Component for ResolutionPhase {
             <>
                 {main_section}
                 <div class="bottom-panel">
-                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={self.prompt.prev().is_none()}>{ "Back" }</button>
+                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={ self.show_tech || self.prompt.prev().is_none()}>{ "Back" }</button>
                     <div class="round">
                         {format!("Round {}", ctx.props().round)}
                     </div>
-                    <button class="button-done" onclick={next_callback}>{ "Done" }</button>
+                    <button class="button-done" onclick={next_callback} disabled={ self.show_tech }>{ "Done" }</button>
                 </div>
             </>
         }
