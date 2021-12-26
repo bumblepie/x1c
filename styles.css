@@ -69,7 +69,10 @@ img {
 .bottom-panel {
     display: flex;
     justify-content: space-between;
-    margin: 1em;
+    padding: 1em;
+    gap: 1em;
+    margin-top: 2px;
+    background-color: #323542;
 }
 
 .round {
@@ -343,7 +346,6 @@ input[type="checkbox"]:checked::before {
     display: flex;
     flex-direction: column;
     gap: 1em;
-    overflow-y: auto;
 }
 
 .components {

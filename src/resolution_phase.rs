@@ -463,7 +463,7 @@ fn description_html_for_prompt(
         ResolutionPhasePrompt::PurchaseReplacementForces => html! {
             <>
                 <p>
-                    {"You may purchase additional "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" and "}{inline_icon_text_phrase("satellite", "Satellites")}{":"}
+                    {"You may purchase additional "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" and "}{inline_icon_text_phrase("satellite", "Satellites:")}
                 </p>
                 <p>
                     {"For §1 each, add an "}{inline_icon_text_phrase("interceptor", "Interceptor")}{" from the supply to your reserves."}
