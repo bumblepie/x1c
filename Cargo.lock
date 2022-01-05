@@ -602,6 +602,8 @@ version = "0.1.0"
 dependencies = [
  "indoc",
  "rand",
+ "serde",
+ "serde_json",
  "test-case",
 ]
 
@@ -612,10 +614,13 @@ dependencies = [
  "boolinator",
  "getrandom",
  "gloo 0.5.0",
+ "gloo-storage",
  "indoc",
  "js-sys",
  "log",
  "rand",
+ "serde",
+ "serde_json",
  "wasm-logger",
  "web-sys",
  "xcom-1-card",

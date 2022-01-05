@@ -4,19 +4,24 @@ mod setup;
 mod tech_reference;
 mod timed_phase;
 
+use gloo_storage::{errors::StorageError, LocalStorage, Storage};
+use rand::thread_rng;
 use resolution_phase::ResolutionPhase;
+use serde::{Deserialize, Serialize};
 use setup::SetupComponent;
 use timed_phase::TimedPhase;
-
-use rand::thread_rng;
 use xcom_1_card::{
     generate_timed_phase_prompts, GameResult, PanicLevel, ResolutionPhasePrompt, TimedPhasePrompt,
 };
 use yew::prelude::*;
 
+const GAMESTATE_KEY: &str = "GameState";
+const PHASE_KEY: &str = "Phase";
+
 enum Msg {
     BeginSetup,
     BeginGame,
+    ContinueGame,
     EnterTimedPhase,
     TimedPhaseCompleted,
     EnterResolutionPhase,
@@ -28,9 +33,10 @@ enum Msg {
     GameCompleted(GameResult),
     UndoGameCompleted,
     ReturnToMainMenu,
+    ClearSavedGame,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 struct GameState {
     round: u32,
     alien_base_discovered: bool,
@@ -54,6 +60,30 @@ struct Model {
     game_state: GameState,
     resolution_phase_starting_prompt: ResolutionPhasePrompt,
 }
+
+impl Model {
+    fn save(&self) -> Result<(), StorageError> {
+        LocalStorage::set(GAMESTATE_KEY, &self.game_state)?;
+        LocalStorage::set(PHASE_KEY, &self.phase)?;
+        Ok(())
+    }
+
+    fn load() -> Result<Self, StorageError> {
+        let game_state = LocalStorage::get(GAMESTATE_KEY)?;
+        let phase = LocalStorage::get(PHASE_KEY)?;
+        Ok(Self {
+            game_state,
+            phase,
+            resolution_phase_starting_prompt: ResolutionPhasePrompt::start(),
+        })
+    }
+
+    fn clear_saved_game() {
+        LocalStorage::clear()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 enum Phase {
     MainMenu,
     Setup,
@@ -96,6 +126,9 @@ impl Component for Model {
                     &mut thread_rng(),
                 );
                 self.phase = Phase::TimedPhase(prompts);
+                if let Err(_) = self.save() {
+                    log::error!("Error saving game");
+                }
                 true
             }
             Msg::AlienBaseDiscovered => {
@@ -104,11 +137,17 @@ impl Component for Model {
             }
             Msg::TimedPhaseCompleted => {
                 self.phase = Phase::PrepareForResolutionPhase;
+                if let Err(_) = self.save() {
+                    log::error!("Error saving game");
+                }
                 true
             }
             Msg::EnterResolutionPhase => {
                 self.resolution_phase_starting_prompt = ResolutionPhasePrompt::start();
                 self.phase = Phase::ResolutionPhase;
+                if let Err(_) = self.save() {
+                    log::error!("Error saving game");
+                }
                 true
             }
             Msg::ResolutionPhaseCompleted {
@@ -122,6 +161,9 @@ impl Component for Model {
                     round: self.game_state.round + 1,
                     ..self.game_state
                 };
+                if let Err(_) = self.save() {
+                    log::error!("Error saving game");
+                }
                 true
             }
             Msg::GameCompleted(result) => {
@@ -138,6 +180,19 @@ impl Component for Model {
                 self.game_state = GameState::new();
                 self.resolution_phase_starting_prompt = ResolutionPhasePrompt::start();
                 true
+            }
+            Msg::ContinueGame => {
+                if let Ok(model) = Self::load() {
+                    self.phase = model.phase;
+                    self.game_state = model.game_state;
+                    true
+                } else {
+                    false
+                }
+            }
+            Msg::ClearSavedGame => {
+                Self::clear_saved_game();
+                false
             }
         }
     }
@@ -158,14 +213,23 @@ impl Component for Model {
                                     <div class="prepare-screen-text">{ "X-1C" }</div>
                                     <div class="prepare-screen-button-container">
                                         <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::BeginSetup)}> {"Instructions"}</button>
-                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::BeginGame)}> {"Quick Start"}</button>
+                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().batch_callback(|_| vec![Msg::ClearSavedGame, Msg::BeginGame])}> {"New Game"}</button>
+                                        {
+                                            if Self::load().is_ok() {
+                                                html!{
+                                                    <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::ContinueGame)}> {"Continue"}</button>
+                                                }
+                                            } else {
+                                                html!{}
+                                            }
+                                        }
                                     </div>
                                 </div>
                             }
                         }
                         Phase::Setup => {
                             html!{
-                                <SetupComponent on_completed={ctx.link().callback(|_| Msg::BeginGame)}/>
+                                <SetupComponent on_main_menu={ctx.link().callback(|_| Msg::ReturnToMainMenu)} on_completed={ctx.link().batch_callback(|_| vec![Msg::ClearSavedGame, Msg::BeginGame])}/>
                             }
                         }
                         Phase::PrepareForTimedPhase => {
@@ -221,7 +285,7 @@ impl Component for Model {
                                     <div class="prepare-screen-text">{ format!("{}", result) }</div>
                                     <div class="prepare-screen-button-container">
                                         <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::UndoGameCompleted)} >{ "Back" }</button>
-                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::ReturnToMainMenu)} >{ "Quit" }</button>
+                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().batch_callback(|_| vec![Msg::ClearSavedGame, Msg::ReturnToMainMenu])} >{ "Quit" }</button>
                                     </div>
                                 </div>
                             }

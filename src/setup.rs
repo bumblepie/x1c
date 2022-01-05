@@ -53,6 +53,7 @@ pub enum Msg {
 
 #[derive(Debug, Clone, PartialEq, Properties)]
 pub struct Props {
+    pub on_main_menu: Callback<MouseEvent>,
     pub on_completed: Callback<MouseEvent>,
 }
 
@@ -118,7 +119,8 @@ impl Component for SetupComponent {
                     </div>
                     <div class="bottom-panel">
                         <button class="button-back" onclick={ctx.link().callback(|_| Msg::PrevPrompt)} disabled={ self.current_step_index < 1 }>{ "Back" }</button>
-                        <button class="button-done" onclick={ctx.props().on_completed.clone()}>{ "Done" }</button>
+                        <button class="button-done" onclick={ctx.props().on_main_menu.clone()}>{ "Main Menu" }</button>
+                        <button class="button-done" onclick={ctx.props().on_completed.clone()}>{ "Begin Game" }</button>
                     </div>
                 </>
             }

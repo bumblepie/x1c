@@ -1,10 +1,14 @@
 use crate::common::{inline_icon_text_phrase, side_buttons};
 use crate::tech_reference::TechReference;
 use boolinator::Boolinator;
-use gloo::timers::callback::Interval;
+use gloo::{timers::callback::Interval, utils::document};
+use gloo_storage::{LocalStorage, Storage};
 use web_sys::Element;
 use xcom_1_card::TimedPhasePrompt;
 use yew::prelude::*;
+
+const LATEST_PROMPT_INDEX_KEY: &str = "TimedPhase_LatestPromptIndex";
+const TIME_REMANING_KEY: &str = "TimedPhase_TimeRemaining";
 
 pub enum Msg {
     NextPrompt,
@@ -40,10 +44,15 @@ impl Component for TimedPhase {
             let link = ctx.link().clone();
             Interval::new(87, move || link.send_message(Msg::Tick))
         };
+        // Load when component is created
+        let latest_prompt_index = LocalStorage::get(LATEST_PROMPT_INDEX_KEY).unwrap_or(0);
+        // Add an extra second to let the player re-read the prompts etc
+        let time_remaining_ms = LocalStorage::get(TIME_REMANING_KEY).unwrap_or(15_000.0) + 1_000.0;
+
         Self {
-            current_prompt_index: 0,
-            latest_prompt_index: 0,
-            time_remaining_ms: 15_000.0,
+            current_prompt_index: latest_prompt_index,
+            latest_prompt_index,
+            time_remaining_ms,
             last_tick_time: js_sys::Date::now(),
             tick_interval,
             show_tech: false,
@@ -63,6 +72,11 @@ impl Component for TimedPhase {
                     }
                     if self.current_prompt_index + 1 > self.latest_prompt_index {
                         self.latest_prompt_index = self.current_prompt_index + 1;
+                        if let Err(_) =
+                            LocalStorage::set(LATEST_PROMPT_INDEX_KEY, self.latest_prompt_index)
+                        {
+                            log::error!("Error saving latest prompt index");
+                        }
                         self.time_remaining_ms += 5000.0;
                     }
                     self.current_prompt_index += 1;
@@ -89,8 +103,11 @@ impl Component for TimedPhase {
             Msg::Tick => {
                 let next_tick_time = js_sys::Date::now();
                 let diff = next_tick_time - self.last_tick_time;
-                if !self.show_tech {
+                if !self.show_tech && document().has_focus().unwrap_or(false) {
                     self.time_remaining_ms = f64::max(self.time_remaining_ms - diff, 0.0);
+                    if let Err(_) = LocalStorage::set(TIME_REMANING_KEY, self.time_remaining_ms) {
+                        log::error!("Error saving time_remaining");
+                    }
                 }
                 self.last_tick_time = next_tick_time;
                 true

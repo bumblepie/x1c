@@ -4,15 +4,16 @@ use rand::{
     distributions::{Uniform, WeightedIndex},
     prelude::*,
 };
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PanicLevel {
     Yellow,
     Orange,
     Red,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Continent {
     America,
     Africa,
@@ -50,7 +51,7 @@ where
     ALL_CONTINENTS.choose(rng).unwrap().clone()
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TimedPhasePrompt {
     TakeIncome(i32),
     RollUFOLocation(Continent),
@@ -246,7 +247,7 @@ where
     return prompts;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ResolutionPhasePrompt {
     AuditSpending,
     ResolveResearch,
@@ -303,7 +304,7 @@ impl ResolutionPhasePrompt {
         .to_owned()
     }
 }
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GameResult {
     Victory,
     PyrrhicVictory,
