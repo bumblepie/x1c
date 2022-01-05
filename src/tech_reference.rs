@@ -80,7 +80,7 @@ impl Tech {
                 phase: PhaseUsage::Timed,
                 description: html! {
                     <>
-                    {"Immediately after rolling a UFO die, you may reroll it and take the new result instead. This may be used in conjuction with a "}{inline_icon_text_phrase("satellite", "Satellite")}{" an additional reroll."}
+                    {"Immediately after rolling a UFO die, you may reroll it and take the new result instead. This may be used in conjuction with a "}{inline_icon_text_phrase("satellite", "Satellite")}{" for an additional reroll."}
                     </>
                 },
             },
@@ -135,7 +135,7 @@ impl Tech {
                 phase: PhaseUsage::Resolution,
                 description: html! {
                     <>
-                    {"When you would lose any amount of "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" during the "}{inline_icon_text_phrase("success", "UFO Defense")}{" task, lose one fewer "}{inline_icon_text_phrase("interceptor", "Interceptor.")}{" This can be used to reduce the number of lost "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" from one to zero, but may only be used once per round."}
+                    {"When you would lose any amount of "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" during the "}{inline_icon_text_phrase("success", "UFO Defense")}{" task, lose one fewer "}{inline_icon_text_phrase("interceptor", "Interceptor.")}{" This can be used to reduce the number of lost "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" from one to zero. Like all "}{inline_icon_text_phrase("tech", "Technologies,")}{" this may only be used once per round."}
                     </>
                 },
             },
