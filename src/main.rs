@@ -10,9 +10,7 @@ use resolution_phase::ResolutionPhase;
 use serde::{Deserialize, Serialize};
 use setup::SetupComponent;
 use timed_phase::TimedPhase;
-use xcom_1_card::{
-    generate_timed_phase_prompts, GameResult, PanicLevel, ResolutionPhasePrompt, TimedPhasePrompt,
-};
+use xcom_1_card::{generate_timed_phase_prompts, GameResult, PanicLevel, TimedPhasePrompt};
 use yew::prelude::*;
 
 const GAMESTATE_KEY: &str = "GameState";
@@ -58,7 +56,6 @@ impl GameState {
 struct Model {
     phase: Phase,
     game_state: GameState,
-    resolution_phase_starting_prompt: ResolutionPhasePrompt,
 }
 
 impl Model {
@@ -71,11 +68,7 @@ impl Model {
     fn load() -> Result<Self, StorageError> {
         let game_state = LocalStorage::get(GAMESTATE_KEY)?;
         let phase = LocalStorage::get(PHASE_KEY)?;
-        Ok(Self {
-            game_state,
-            phase,
-            resolution_phase_starting_prompt: ResolutionPhasePrompt::start(),
-        })
+        Ok(Self { game_state, phase })
     }
 
     fn clear_saved_game() {
@@ -103,7 +96,6 @@ impl Component for Model {
         Self {
             phase: Phase::MainMenu,
             game_state: GameState::new(),
-            resolution_phase_starting_prompt: ResolutionPhasePrompt::start(),
         }
     }
 
@@ -143,7 +135,6 @@ impl Component for Model {
                 true
             }
             Msg::EnterResolutionPhase => {
-                self.resolution_phase_starting_prompt = ResolutionPhasePrompt::start();
                 self.phase = Phase::ResolutionPhase;
                 if let Err(_) = self.save() {
                     log::error!("Error saving game");
@@ -172,13 +163,11 @@ impl Component for Model {
             }
             Msg::UndoGameCompleted => {
                 self.phase = Phase::ResolutionPhase;
-                self.resolution_phase_starting_prompt = ResolutionPhasePrompt::AskForBoardState;
                 true
             }
             Msg::ReturnToMainMenu => {
                 self.phase = Phase::MainMenu;
                 self.game_state = GameState::new();
-                self.resolution_phase_starting_prompt = ResolutionPhasePrompt::start();
                 true
             }
             Msg::ContinueGame => {
@@ -266,7 +255,6 @@ impl Component for Model {
                         Phase::ResolutionPhase => {
                             html! {
                                 <ResolutionPhase
-                                    starting_prompt={self.resolution_phase_starting_prompt.clone()}
                                     panic_level={self.game_state.panic_level.clone()}
                                     ufos_left={self.game_state.ufos_left}
                                     alien_base_discovered={self.game_state.alien_base_discovered}

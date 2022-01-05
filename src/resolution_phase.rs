@@ -1,3 +1,5 @@
+use gloo_storage::{LocalStorage, Storage};
+use serde::{Deserialize, Serialize};
 use web_sys::{Element, HtmlInputElement};
 use xcom_1_card::{GameResult, PanicLevel, ResolutionPhasePrompt};
 use yew::prelude::*;
@@ -5,7 +7,12 @@ use yew::prelude::*;
 use crate::common::{inline_icon_text_phrase, side_buttons};
 use crate::tech_reference::TechReference;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+const LATEST_PROMPT_INDEX_KEY: &str = "ResolutionPhase_LatestPromptIndex";
+const PANIC_LEVEL_INPUT_KEY: &str = "ResolutionPhase_PanicLevelInput";
+const UFOS_INPUT_KEY: &str = "ResolutionPhase_UFOsInput";
+const ALIEN_BASE_DESTROYED_INPUT_KEY: &str = "ResolutionPhase_AlienBaseDestroyedInput";
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PanicLevelInput {
     PanicLevel(PanicLevel),
     AlienSpace,
@@ -40,7 +47,9 @@ impl TryFrom<&str> for PanicLevelInput {
 }
 
 pub struct ResolutionPhase {
-    prompt: ResolutionPhasePrompt,
+    prompts: Vec<ResolutionPhasePrompt>,
+    prompt_index: usize,
+    latest_prompt_index: usize,
     panic_level_input: PanicLevelInput,
     ufos_left_input: u32,
     alien_base_destroyed_input: bool,
@@ -67,8 +76,6 @@ pub struct Props {
     pub round: u32,
     pub on_completed: Callback<(PanicLevel, u32)>,
     pub on_game_end: Callback<GameResult>,
-    #[prop_or_else(ResolutionPhasePrompt::start)]
-    pub starting_prompt: ResolutionPhasePrompt,
 }
 
 impl Component for ResolutionPhase {
@@ -77,11 +84,21 @@ impl Component for ResolutionPhase {
     type Properties = Props;
 
     fn create(ctx: &Context<Self>) -> Self {
+        // Load when component is created
+        let latest_prompt_index = LocalStorage::get(LATEST_PROMPT_INDEX_KEY).unwrap_or(0);
+        let panic_level_input = LocalStorage::get(PANIC_LEVEL_INPUT_KEY)
+            .unwrap_or(PanicLevelInput::PanicLevel(ctx.props().panic_level.clone()));
+        let ufos_left_input = LocalStorage::get(UFOS_INPUT_KEY).unwrap_or(ctx.props().ufos_left);
+        let alien_base_destroyed_input =
+            LocalStorage::get(ALIEN_BASE_DESTROYED_INPUT_KEY).unwrap_or(false);
+
         Self {
-            prompt: ctx.props().starting_prompt.clone(),
-            panic_level_input: PanicLevelInput::PanicLevel(ctx.props().panic_level.clone()),
-            ufos_left_input: ctx.props().ufos_left,
-            alien_base_destroyed_input: false,
+            prompts: ResolutionPhasePrompt::all(),
+            prompt_index: latest_prompt_index,
+            latest_prompt_index,
+            panic_level_input,
+            ufos_left_input,
+            alien_base_destroyed_input,
             show_tech: false,
             prompt_details_ref: NodeRef::default(),
         }
@@ -90,8 +107,16 @@ impl Component for ResolutionPhase {
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::NextPrompt => {
-                if let Some(next_prompt) = self.prompt.next() {
-                    self.prompt = next_prompt;
+                if self.prompt_index + 1 < self.prompts.len() {
+                    self.prompt_index += 1;
+                    if self.prompt_index > self.latest_prompt_index {
+                        self.latest_prompt_index = self.prompt_index;
+                        if let Err(_) =
+                            LocalStorage::set(LATEST_PROMPT_INDEX_KEY, self.latest_prompt_index)
+                        {
+                            log::error!("Error saving latest prompt index");
+                        }
+                    }
                     if let Some(element) = self.prompt_details_ref.cast::<Element>() {
                         element.scroll_to_with_x_and_y(0.0, 0.0);
                     }
@@ -106,8 +131,8 @@ impl Component for ResolutionPhase {
                 }
             }
             Msg::PreviousPrompt => {
-                if let Some(prev_prompt) = self.prompt.prev() {
-                    self.prompt = prev_prompt;
+                if self.prompt_index > 0 {
+                    self.prompt_index -= 1;
                     if let Some(element) = self.prompt_details_ref.cast::<Element>() {
                         element.scroll_to_with_x_and_y(0.0, 0.0);
                     }
@@ -118,11 +143,19 @@ impl Component for ResolutionPhase {
             }
             Msg::UpdatePanicLevel(panic_level_input) => {
                 self.panic_level_input = panic_level_input;
+                if let Err(_) =
+                    LocalStorage::set(PANIC_LEVEL_INPUT_KEY, self.panic_level_input.clone())
+                {
+                    log::error!("Error saving panic level input");
+                }
                 false
             }
             Msg::IncreaseUFOsLeft => {
                 if self.ufos_left_input < 18 {
                     self.ufos_left_input += 1;
+                }
+                if let Err(_) = LocalStorage::set(UFOS_INPUT_KEY, self.ufos_left_input) {
+                    log::error!("Error saving UFOs left input");
                 }
                 true
             }
@@ -130,27 +163,43 @@ impl Component for ResolutionPhase {
                 if self.ufos_left_input > 0 {
                     self.ufos_left_input -= 1;
                 }
+                if let Err(_) = LocalStorage::set(UFOS_INPUT_KEY, self.ufos_left_input) {
+                    log::error!("Error saving UFOs left input");
+                }
                 true
             }
             Msg::UpdateAlienBaseDestroyed(alien_base_destroyed) => {
                 self.alien_base_destroyed_input = alien_base_destroyed;
+                if let Err(_) = LocalStorage::set(
+                    ALIEN_BASE_DESTROYED_INPUT_KEY,
+                    self.alien_base_destroyed_input,
+                ) {
+                    log::error!("Error saving UFOs left input");
+                }
                 false
             }
             Msg::CheckGameEnd => {
-                match (
+                if let Some(game_result) = match (
                     self.alien_base_destroyed_input,
                     self.panic_level_input.clone(),
                 ) {
-                    (true, PanicLevelInput::PanicLevel(_)) => {
-                        ctx.props().on_game_end.emit(GameResult::Victory)
+                    (true, PanicLevelInput::PanicLevel(_)) => Some(GameResult::Victory),
+                    (true, PanicLevelInput::AlienSpace) => Some(GameResult::PyrrhicVictory),
+                    (false, PanicLevelInput::AlienSpace) => Some(GameResult::Defeat),
+                    (false, PanicLevelInput::PanicLevel(_)) => None,
+                } {
+                    if let Some(input_index) = self
+                        .prompts
+                        .iter()
+                        .position(|prompt| *prompt == ResolutionPhasePrompt::AskForBoardState)
+                    {
+                        if let Err(_) = LocalStorage::set(LATEST_PROMPT_INDEX_KEY, input_index) {
+                            log::error!("Error saving latest prompt index");
+                        }
                     }
-                    (true, PanicLevelInput::AlienSpace) => {
-                        ctx.props().on_game_end.emit(GameResult::PyrrhicVictory)
-                    }
-                    (false, PanicLevelInput::AlienSpace) => {
-                        ctx.props().on_game_end.emit(GameResult::Defeat)
-                    }
-                    (false, PanicLevelInput::PanicLevel(_)) => (),
+                    ctx.props().on_game_end.emit(game_result);
+                } else {
+                    ctx.link().send_message(Msg::NextPrompt);
                 }
                 false
             }
@@ -159,13 +208,6 @@ impl Component for ResolutionPhase {
                 true
             }
         }
-    }
-
-    fn changed(&mut self, ctx: &Context<Self>) -> bool {
-        self.prompt = ctx.props().starting_prompt.clone();
-        self.panic_level_input = PanicLevelInput::PanicLevel(ctx.props().panic_level.clone());
-        self.ufos_left_input = ctx.props().ufos_left;
-        true
     }
 
     fn view(&self, ctx: &Context<Self>) -> yew::Html {
@@ -177,7 +219,8 @@ impl Component for ResolutionPhase {
             }
             return vec![];
         });
-        let main_section = match self.prompt {
+        let prompt = &self.prompts[self.prompt_index];
+        let main_section = match prompt {
             ResolutionPhasePrompt::AskForBoardState => {
                 let current_panic_level: String = self.panic_level_input.clone().into();
                 html! {
@@ -246,7 +289,7 @@ impl Component for ResolutionPhase {
             }
             _ => html! {
                 <>
-                    <h1 class="prompt-title">{ self.prompt.title() }</h1>
+                    <h1 class="prompt-title">{ prompt.title() }</h1>
                     <div class="prompt-center-area">
                         {side_buttons(ctx.link().callback(|_| Msg::ToggleTech))}
                         {
@@ -260,10 +303,10 @@ impl Component for ResolutionPhase {
                                 html!{
                                     <div class="prompt-details" ref={self.prompt_details_ref.clone()}>
                                         <div class="prompt-icons">
-                                            {icon_html_for_prompt(&self.prompt)}
+                                            {icon_html_for_prompt(&prompt)}
                                         </div>
                                         <div class="prompt-description">
-                                            {description_html_for_prompt(&self.prompt, ctx.props().alien_base_discovered)}
+                                            {description_html_for_prompt(&prompt, ctx.props().alien_base_discovered)}
                                         </div>
                                     </div>
                                 }
@@ -273,17 +316,15 @@ impl Component for ResolutionPhase {
                 </>
             },
         };
-        let next_callback = match self.prompt {
-            ResolutionPhasePrompt::AskForBoardState => ctx
-                .link()
-                .batch_callback(|_| vec![Msg::CheckGameEnd, Msg::NextPrompt]),
+        let next_callback = match prompt {
+            ResolutionPhasePrompt::AskForBoardState => ctx.link().callback(|_| Msg::CheckGameEnd),
             _ => ctx.link().callback(|_| Msg::NextPrompt),
         };
         html! {
             <>
                 {main_section}
                 <div class="bottom-panel">
-                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={ self.show_tech || self.prompt.prev().is_none()}>{ "Back" }</button>
+                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={ self.show_tech || self.prompt_index < 1}>{ "Back" }</button>
                     <div class="round">
                         {format!("Round {}", ctx.props().round)}
                     </div>

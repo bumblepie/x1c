@@ -100,8 +100,8 @@ fn run_game() -> GameResult {
         }
         prompt_console("Ending Timed phase");
         prompt_console("Beginning Resolution phase");
-        let mut resolution_phase_prompt = Some(ResolutionPhasePrompt::start());
-        while let Some(prompt) = resolution_phase_prompt {
+        let resolution_phase_prompts = ResolutionPhasePrompt::all();
+        for prompt in resolution_phase_prompts.into_iter() {
             prompt_console(&format!("{:?}", prompt));
             if prompt == ResolutionPhasePrompt::AskForBoardState {
                 let panic_level_input = get_panic_level_input();
@@ -127,7 +127,6 @@ fn run_game() -> GameResult {
                     }
                 }
             }
-            resolution_phase_prompt = prompt.next();
         }
         game_state.round += 1;
     }

@@ -260,46 +260,29 @@ pub enum ResolutionPhasePrompt {
 }
 
 impl ResolutionPhasePrompt {
-    pub fn start() -> Self {
-        Self::AuditSpending
-    }
-
-    pub fn next(&self) -> Option<Self> {
-        match self {
-            Self::AuditSpending => Some(Self::ResolveResearch),
-            Self::ResolveResearch => Some(Self::ResolveUFODefense),
-            Self::ResolveUFODefense => Some(Self::IncreasePanic),
-            Self::IncreasePanic => Some(Self::AskForBoardState),
-            Self::AskForBoardState => Some(Self::ResolveContinentBonuses),
-            Self::ResolveContinentBonuses => Some(Self::CleanUp),
-            Self::CleanUp => Some(Self::PurchaseReplacementForces),
-            Self::PurchaseReplacementForces => None,
-        }
-    }
-
-    pub fn prev(&self) -> Option<Self> {
-        match self {
-            Self::AuditSpending => None,
-            Self::ResolveResearch => Some(Self::AuditSpending),
-            Self::ResolveUFODefense => Some(Self::ResolveResearch),
-            Self::IncreasePanic => Some(Self::ResolveUFODefense),
-            Self::AskForBoardState => Some(Self::IncreasePanic),
-            Self::ResolveContinentBonuses => Some(Self::AskForBoardState),
-            Self::CleanUp => Some(Self::ResolveContinentBonuses),
-            Self::PurchaseReplacementForces => Some(Self::CleanUp),
-        }
+    pub fn all() -> Vec<Self> {
+        vec![
+            Self::AuditSpending,
+            Self::ResolveResearch,
+            Self::ResolveUFODefense,
+            Self::IncreasePanic,
+            Self::AskForBoardState,
+            Self::ResolveContinentBonuses,
+            Self::CleanUp,
+            Self::PurchaseReplacementForces,
+        ]
     }
 
     pub fn title(&self) -> String {
         match self {
-            ResolutionPhasePrompt::AuditSpending => "Audit Spending",
-            ResolutionPhasePrompt::ResolveResearch => "Resolve Research",
-            ResolutionPhasePrompt::ResolveUFODefense => "Resolve UFO Defense",
-            ResolutionPhasePrompt::IncreasePanic => "Increase Panic",
-            ResolutionPhasePrompt::AskForBoardState => "Update Board State",
-            ResolutionPhasePrompt::ResolveContinentBonuses => "Gain Continent Bonuses",
-            ResolutionPhasePrompt::CleanUp => "Clean Up",
-            ResolutionPhasePrompt::PurchaseReplacementForces => "Replenish Forces",
+            Self::AuditSpending => "Audit Spending",
+            Self::ResolveResearch => "Resolve Research",
+            Self::ResolveUFODefense => "Resolve UFO Defense",
+            Self::IncreasePanic => "Increase Panic",
+            Self::AskForBoardState => "Update Board State",
+            Self::ResolveContinentBonuses => "Gain Continent Bonuses",
+            Self::CleanUp => "Clean Up",
+            Self::PurchaseReplacementForces => "Replenish Forces",
         }
         .to_owned()
     }
