@@ -10,11 +10,15 @@ use yew::prelude::*;
 const LATEST_PROMPT_INDEX_KEY: &str = "TimedPhase_LatestPromptIndex";
 const TIME_REMANING_KEY: &str = "TimedPhase_TimeRemaining";
 
+const STARTING_TIME: f64 = 16_000.0;
+const TIME_PER_PROMPT: f64 = 8_000.0;
+
 pub enum Msg {
     NextPrompt,
     PreviousPrompt,
     Tick,
     ToggleTech,
+    OnCompleted,
 }
 
 pub struct TimedPhase {
@@ -31,7 +35,7 @@ pub struct TimedPhase {
 pub struct TimedPhaseProps {
     pub prompts: Vec<TimedPhasePrompt>,
     pub round: u32,
-    pub on_completed: Callback<MouseEvent>,
+    pub on_completed: Callback<()>,
     pub on_alien_base_discovered: Callback<()>,
 }
 
@@ -47,7 +51,8 @@ impl Component for TimedPhase {
         // Load when component is created
         let latest_prompt_index = LocalStorage::get(LATEST_PROMPT_INDEX_KEY).unwrap_or(0);
         // Add an extra second to let the player re-read the prompts etc
-        let time_remaining_ms = LocalStorage::get(TIME_REMANING_KEY).unwrap_or(15_000.0) + 1_000.0;
+        let time_remaining_ms =
+            LocalStorage::get(TIME_REMANING_KEY).unwrap_or(STARTING_TIME) + 1_000.0;
 
         Self {
             current_prompt_index: latest_prompt_index,
@@ -77,7 +82,7 @@ impl Component for TimedPhase {
                         {
                             log::error!("Error saving latest prompt index");
                         }
-                        self.time_remaining_ms += 5000.0;
+                        self.time_remaining_ms += TIME_PER_PROMPT;
                     }
                     self.current_prompt_index += 1;
 
@@ -116,6 +121,12 @@ impl Component for TimedPhase {
                 self.show_tech = !self.show_tech;
                 true
             }
+            Msg::OnCompleted => {
+                LocalStorage::delete(LATEST_PROMPT_INDEX_KEY);
+                LocalStorage::delete(TIME_REMANING_KEY);
+                ctx.props().on_completed.emit(());
+                false
+            }
         }
     }
 
@@ -129,7 +140,7 @@ impl Component for TimedPhase {
         {
             (
                 "Completing Timed Phase".to_owned(),
-                ctx.props().on_completed.clone(),
+                ctx.link().callback(|_| Msg::OnCompleted),
                 html! {
                     <img class="prompt-icon" src="assets/icons/time.png"/>
                 },

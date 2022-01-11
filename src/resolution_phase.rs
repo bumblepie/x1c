@@ -123,6 +123,10 @@ impl Component for ResolutionPhase {
                     true
                 } else {
                     if let PanicLevelInput::PanicLevel(level) = self.panic_level_input.clone() {
+                        LocalStorage::delete(LATEST_PROMPT_INDEX_KEY);
+                        LocalStorage::delete(PANIC_LEVEL_INPUT_KEY);
+                        LocalStorage::delete(UFOS_INPUT_KEY);
+                        LocalStorage::delete(ALIEN_BASE_DESTROYED_INPUT_KEY);
                         ctx.props().on_completed.emit((level, self.ufos_left_input));
                         false
                     } else {
