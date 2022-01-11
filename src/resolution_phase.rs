@@ -1,3 +1,4 @@
+use boolinator::Boolinator;
 use gloo_storage::{LocalStorage, Storage};
 use serde::{Deserialize, Serialize};
 use web_sys::{Element, HtmlInputElement};
@@ -48,7 +49,7 @@ impl TryFrom<&str> for PanicLevelInput {
 
 pub struct ResolutionPhase {
     prompts: Vec<ResolutionPhasePrompt>,
-    prompt_index: usize,
+    current_prompt_index: usize,
     latest_prompt_index: usize,
     panic_level_input: PanicLevelInput,
     ufos_left_input: u32,
@@ -94,7 +95,7 @@ impl Component for ResolutionPhase {
 
         Self {
             prompts: ResolutionPhasePrompt::all(),
-            prompt_index: latest_prompt_index,
+            current_prompt_index: latest_prompt_index,
             latest_prompt_index,
             panic_level_input,
             ufos_left_input,
@@ -107,10 +108,10 @@ impl Component for ResolutionPhase {
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::NextPrompt => {
-                if self.prompt_index + 1 < self.prompts.len() {
-                    self.prompt_index += 1;
-                    if self.prompt_index > self.latest_prompt_index {
-                        self.latest_prompt_index = self.prompt_index;
+                if self.current_prompt_index + 1 < self.prompts.len() {
+                    self.current_prompt_index += 1;
+                    if self.current_prompt_index > self.latest_prompt_index {
+                        self.latest_prompt_index = self.current_prompt_index;
                         if let Err(_) =
                             LocalStorage::set(LATEST_PROMPT_INDEX_KEY, self.latest_prompt_index)
                         {
@@ -135,8 +136,8 @@ impl Component for ResolutionPhase {
                 }
             }
             Msg::PreviousPrompt => {
-                if self.prompt_index > 0 {
-                    self.prompt_index -= 1;
+                if self.current_prompt_index > 0 {
+                    self.current_prompt_index -= 1;
                     if let Some(element) = self.prompt_details_ref.cast::<Element>() {
                         element.scroll_to_with_x_and_y(0.0, 0.0);
                     }
@@ -223,7 +224,8 @@ impl Component for ResolutionPhase {
             }
             return vec![];
         });
-        let prompt = &self.prompts[self.prompt_index];
+        let prompt = &self.prompts[self.current_prompt_index];
+        let is_not_latest_prompt = self.current_prompt_index < self.latest_prompt_index;
         let main_section = match prompt {
             ResolutionPhasePrompt::AskForBoardState => {
                 let current_panic_level: String = self.panic_level_input.clone().into();
@@ -293,7 +295,7 @@ impl Component for ResolutionPhase {
             }
             _ => html! {
                 <>
-                    <h1 class="prompt-title">{ prompt.title() }</h1>
+                    <h1 class={classes!("prompt-title", is_not_latest_prompt.as_some("faded-text"))}>{ prompt.title() }</h1>
                     <div class="prompt-center-area">
                         {side_buttons(ctx.link().callback(|_| Msg::ToggleTech))}
                         {
@@ -309,7 +311,7 @@ impl Component for ResolutionPhase {
                                         <div class="prompt-icons">
                                             {icon_html_for_prompt(&prompt)}
                                         </div>
-                                        <div class="prompt-description">
+                                        <div class={classes!("prompt-description", is_not_latest_prompt.as_some("faded-text"))}>
                                             {description_html_for_prompt(&prompt, ctx.props().alien_base_discovered)}
                                         </div>
                                     </div>
@@ -328,11 +330,17 @@ impl Component for ResolutionPhase {
             <>
                 {main_section}
                 <div class="bottom-panel">
-                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={ self.show_tech || self.prompt_index < 1}>{ "Back" }</button>
+                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={ self.show_tech || self.current_prompt_index < 1}>{ "Back" }</button>
                     <div class="round">
                         {format!("Round {}", ctx.props().round)}
                     </div>
-                    <button class="button-done" onclick={next_callback} disabled={ self.show_tech }>{ "Done" }</button>
+                    <button class="button-done" onclick={next_callback} disabled={ self.show_tech }>{
+                        if is_not_latest_prompt {
+                            "Next"
+                        } else {
+                            "Done"
+                        }
+                    }</button>
                 </div>
             </>
         }

@@ -160,9 +160,10 @@ impl Component for TimedPhase {
         };
         let time_s = (self.time_remaining_ms / 1000.0).floor();
         let time_ms = ((self.time_remaining_ms % 1000.0) / 10.0).floor();
+        let is_not_latest_prompt = self.current_prompt_index < self.latest_prompt_index;
         html! {
             <>
-                <h1 class="prompt-title">{ title }</h1>
+                <h1 class={classes!("prompt-title", is_not_latest_prompt.as_some("faded-text"))}>{ title }</h1>
                 <div class="prompt-center-area">
                     {side_buttons(ctx.link().callback(|_| Msg::ToggleTech))}
                     {
@@ -178,7 +179,7 @@ impl Component for TimedPhase {
                                     <div class="prompt-icons">
                                         {icons_html}
                                     </div>
-                                    <div class="prompt-description">
+                                    <div class={classes!("prompt-description", is_not_latest_prompt.as_some("faded-text"))}>
                                         {description}
                                     </div>
                                 </div>
@@ -194,7 +195,13 @@ impl Component for TimedPhase {
                         <div class="round">{format!("Round {}", ctx.props().round)}</div>
                         <div class={classes!("timer", (time_s < 5.0).as_some("blink-red"))}>{ format!("{:3.0}:{:02.0}", time_s, time_ms) }</div>
                     </div>
-                    <button class="button-done" onclick={next_callback} disabled={ self.show_tech }>{ "Done" }</button>
+                    <button class="button-done" onclick={next_callback} disabled={ self.show_tech }>{
+                        if is_not_latest_prompt {
+                            "Next"
+                        } else {
+                            "Done"
+                        }
+                    }</button>
                 </div>
             </>
         }
