@@ -5,8 +5,11 @@ use web_sys::{Element, HtmlInputElement};
 use xcom_1_card::{GameResult, PanicLevel, ResolutionPhasePrompt};
 use yew::prelude::*;
 
-use crate::common::{inline_icon_text_phrase, side_buttons};
 use crate::tech_reference::TechReference;
+use crate::{
+    common::{inline_icon_text_phrase, side_buttons, Focus},
+    rules::rules_reference,
+};
 
 const LATEST_PROMPT_INDEX_KEY: &str = "ResolutionPhase_LatestPromptIndex";
 const PANIC_LEVEL_INPUT_KEY: &str = "ResolutionPhase_PanicLevelInput";
@@ -54,7 +57,7 @@ pub struct ResolutionPhase {
     panic_level_input: PanicLevelInput,
     ufos_left_input: u32,
     alien_base_destroyed_input: bool,
-    show_tech: bool,
+    focus: Focus,
     prompt_details_ref: NodeRef,
 }
 
@@ -67,6 +70,7 @@ pub enum Msg {
     UpdateAlienBaseDestroyed(bool),
     CheckGameEnd,
     ToggleTech,
+    ToggleResearch,
 }
 
 #[derive(Debug, Clone, PartialEq, Properties)]
@@ -100,7 +104,7 @@ impl Component for ResolutionPhase {
             panic_level_input,
             ufos_left_input,
             alien_base_destroyed_input,
-            show_tech: false,
+            focus: Focus::Prompt,
             prompt_details_ref: NodeRef::default(),
         }
     }
@@ -209,7 +213,17 @@ impl Component for ResolutionPhase {
                 false
             }
             Msg::ToggleTech => {
-                self.show_tech = !self.show_tech;
+                self.focus = match self.focus {
+                    Focus::Prompt | Focus::RulesReference => Focus::TechReference,
+                    Focus::TechReference => Focus::Prompt,
+                };
+                true
+            }
+            Msg::ToggleResearch => {
+                self.focus = match self.focus {
+                    Focus::Prompt | Focus::TechReference => Focus::RulesReference,
+                    Focus::RulesReference => Focus::Prompt,
+                };
                 true
             }
         }
@@ -297,16 +311,10 @@ impl Component for ResolutionPhase {
                 <>
                     <h1 class={classes!("prompt-title", is_not_latest_prompt.as_some("faded-text"))}>{ prompt.title() }</h1>
                     <div class="prompt-center-area">
-                        {side_buttons(ctx.link().callback(|_| Msg::ToggleTech))}
+                        {side_buttons(ctx.link().callback(|_| Msg::ToggleTech), ctx.link().callback(|_| Msg::ToggleResearch))}
                         {
-                            if self.show_tech {
-                                html!{
-                                    <div class="tech-ref-container">
-                                        <TechReference/>
-                                    </div>
-                                }
-                            } else {
-                                html!{
+                            match self.focus {
+                                Focus::Prompt => html!{
                                     <div class="prompt-details" ref={self.prompt_details_ref.clone()}>
                                         <div class="prompt-icons">
                                             {icon_html_for_prompt(&prompt)}
@@ -314,6 +322,17 @@ impl Component for ResolutionPhase {
                                         <div class={classes!("prompt-description", is_not_latest_prompt.as_some("faded-text"))}>
                                             {description_html_for_prompt(&prompt, ctx.props().alien_base_discovered)}
                                         </div>
+                                    </div>
+                                },
+                                Focus::TechReference => html!{
+                                    <div class="tech-ref-container">
+                                        <TechReference/>
+                                    </div>
+                                },
+                                Focus::RulesReference => html!{
+                                    <div class="rules-ref-container">
+                                        <h1 class="prompt-title">{"Rules Reference"}</h1>
+                                        {rules_reference()}
                                     </div>
                                 }
                             }
@@ -330,11 +349,11 @@ impl Component for ResolutionPhase {
             <>
                 {main_section}
                 <div class="bottom-panel">
-                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={ self.show_tech || self.current_prompt_index < 1}>{ "Back" }</button>
+                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={ !matches!(self.focus, Focus::Prompt) || self.current_prompt_index < 1}>{ "Back" }</button>
                     <div class="round">
                         {format!("Round {}", ctx.props().round)}
                     </div>
-                    <button class="button-done" onclick={next_callback} disabled={ self.show_tech }>{
+                    <button class="button-done" onclick={next_callback} disabled={ !matches!(self.focus, Focus::Prompt) }>{
                         if is_not_latest_prompt {
                             "Next"
                         } else {

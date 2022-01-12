@@ -1,5 +1,8 @@
-use crate::common::{inline_icon_text_phrase, side_buttons};
-use crate::tech_reference::TechReference;
+use crate::{common::Focus, tech_reference::TechReference};
+use crate::{
+    common::{inline_icon_text_phrase, side_buttons},
+    rules::rules_reference,
+};
 use boolinator::Boolinator;
 use gloo::{timers::callback::Interval, utils::document};
 use gloo_storage::{LocalStorage, Storage};
@@ -18,6 +21,7 @@ pub enum Msg {
     PreviousPrompt,
     Tick,
     ToggleTech,
+    ToggleResearch,
     OnCompleted,
 }
 
@@ -27,7 +31,7 @@ pub struct TimedPhase {
     time_remaining_ms: f64,
     last_tick_time: f64,
     tick_interval: Interval,
-    show_tech: bool,
+    focus: Focus,
     prompt_details_ref: NodeRef,
 }
 
@@ -60,7 +64,7 @@ impl Component for TimedPhase {
             time_remaining_ms,
             last_tick_time: js_sys::Date::now(),
             tick_interval,
-            show_tech: false,
+            focus: Focus::Prompt,
             prompt_details_ref: NodeRef::default(),
         }
     }
@@ -108,7 +112,7 @@ impl Component for TimedPhase {
             Msg::Tick => {
                 let next_tick_time = js_sys::Date::now();
                 let diff = next_tick_time - self.last_tick_time;
-                if !self.show_tech && document().has_focus().unwrap_or(false) {
+                if matches!(self.focus, Focus::Prompt) && document().has_focus().unwrap_or(false) {
                     self.time_remaining_ms = f64::max(self.time_remaining_ms - diff, 0.0);
                     if let Err(_) = LocalStorage::set(TIME_REMANING_KEY, self.time_remaining_ms) {
                         log::error!("Error saving time_remaining");
@@ -118,7 +122,17 @@ impl Component for TimedPhase {
                 true
             }
             Msg::ToggleTech => {
-                self.show_tech = !self.show_tech;
+                self.focus = match self.focus {
+                    Focus::Prompt | Focus::RulesReference => Focus::TechReference,
+                    Focus::TechReference => Focus::Prompt,
+                };
+                true
+            }
+            Msg::ToggleResearch => {
+                self.focus = match self.focus {
+                    Focus::Prompt | Focus::TechReference => Focus::RulesReference,
+                    Focus::RulesReference => Focus::Prompt,
+                };
                 true
             }
             Msg::OnCompleted => {
@@ -165,16 +179,10 @@ impl Component for TimedPhase {
             <>
                 <h1 class={classes!("prompt-title", is_not_latest_prompt.as_some("faded-text"))}>{ title }</h1>
                 <div class="prompt-center-area">
-                    {side_buttons(ctx.link().callback(|_| Msg::ToggleTech))}
+                    {side_buttons(ctx.link().callback(|_| Msg::ToggleTech), ctx.link().callback(|_| Msg::ToggleResearch))}
                     {
-                        if self.show_tech {
-                            html!{
-                                <div class="tech-ref-container">
-                                    <TechReference/>
-                                </div>
-                            }
-                        } else {
-                            html!{
+                        match self.focus {
+                            Focus::Prompt => html!{
                                 <div class="prompt-details" ref={self.prompt_details_ref.clone()}>
                                     <div class="prompt-icons">
                                         {icons_html}
@@ -183,19 +191,30 @@ impl Component for TimedPhase {
                                         {description}
                                     </div>
                                 </div>
-                            }
+                            },
+                            Focus::TechReference => html!{
+                                <div class="tech-ref-container">
+                                    <TechReference/>
+                                </div>
+                            },
+                            Focus::RulesReference => html!{
+                                <div class="rules-ref-container">
+                                    <h1 class="prompt-title">{"Rules Reference"}</h1>
+                                    {rules_reference()}
+                                </div>
+                            },
                         }
                     }
                     <div class="timed-phase-prompt-preview">
                     </div>
                 </div>
                 <div class="bottom-panel">
-                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={ self.show_tech || self.current_prompt_index < 1 }>{ "Back" }</button>
+                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PreviousPrompt)} disabled={ !matches!(self.focus, Focus::Prompt) || self.current_prompt_index < 1 }>{ "Back" }</button>
                     <div>
                         <div class="round">{format!("Round {}", ctx.props().round)}</div>
                         <div class={classes!("timer", (time_s < 5.0).as_some("blink-red"))}>{ format!("{:3.0}:{:02.0}", time_s, time_ms) }</div>
                     </div>
-                    <button class="button-done" onclick={next_callback} disabled={ self.show_tech }>{
+                    <button class="button-done" onclick={next_callback} disabled={ !matches!(self.focus, Focus::Prompt) }>{
                         if is_not_latest_prompt {
                             "Next"
                         } else {

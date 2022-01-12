@@ -367,6 +367,7 @@ ul {
 .side-buttons {
     display: flex;
     flex-direction: column;
+    gap: 10px;
 }
 
 .side-button-tech {
@@ -388,6 +389,30 @@ ul {
     overflow-y: auto;
     background-color: #3a3c48;
     border-color: #fda600;
+    border-width: 2px;
+    border-style: solid;
+    padding: 10px;
+}
+
+.side-button-rules {
+    background-color: #6272a4;
+    border-top-right-radius: 10%;
+    border-bottom-right-radius: 10%;
+}
+
+.side-button-rules:hover {
+    background-color: #6e7eb3;
+}
+
+.side-button-rules:active {
+    background-color: #576693;
+    color: #c0c0ba;
+}
+
+.rules-ref-container {
+    overflow-y: auto;
+    background-color: #3a3c48;
+    border-color: #576693;
     border-width: 2px;
     border-style: solid;
     padding: 10px;
@@ -418,4 +443,13 @@ ul {
     font-size: medium;
     text-align: justify;
     line-height: 1.8em;
+}
+
+.faded-text {
+    color: #f2f2f2aa;
+}
+
+.rules-ref-title {
+    font-size: x-large;
+    line-height: 1.7em;
 }

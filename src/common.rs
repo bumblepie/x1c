@@ -22,12 +22,24 @@ pub fn inline_icon_text_phrase(icon: &str, title: &str) -> Html {
     }
 }
 
-pub fn side_buttons(tech_callback: Callback<MouseEvent>) -> Html {
+pub fn side_buttons(
+    tech_callback: Callback<MouseEvent>,
+    rules_callback: Callback<MouseEvent>,
+) -> Html {
     html! {
         <div class="side-buttons">
             <button class="side-button-tech" onclick={tech_callback}>
                 <img src="assets/icons/tech.png" />
             </button>
+            <button class="side-button-rules" onclick={rules_callback}>
+                <img src="assets/icons/help.png" />
+            </button>
         </div>
     }
+}
+
+pub enum Focus {
+    Prompt,
+    TechReference,
+    RulesReference,
 }

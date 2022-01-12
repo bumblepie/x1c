@@ -1,14 +1,14 @@
 mod common;
 mod resolution_phase;
-mod setup;
+mod rules;
 mod tech_reference;
 mod timed_phase;
 
 use gloo_storage::{errors::StorageError, LocalStorage, Storage};
 use rand::thread_rng;
 use resolution_phase::ResolutionPhase;
+use rules::RulesExplanation;
 use serde::{Deserialize, Serialize};
-use setup::SetupComponent;
 use timed_phase::TimedPhase;
 use xcom_1_card::{generate_timed_phase_prompts, GameResult, PanicLevel, TimedPhasePrompt};
 use yew::prelude::*;
@@ -201,7 +201,7 @@ impl Component for Model {
                                 <div class="background-image prepare-screen" style="background-image: url(assets/background-art/alien-head.png)">
                                     <div class="prepare-screen-text">{ "X-1C" }</div>
                                     <div class="prepare-screen-button-container">
-                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::BeginSetup)}> {"Instructions"}</button>
+                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::BeginSetup)}> {"Rules"}</button>
                                         <button class="prepare-screen-button button-shadow" onclick={ctx.link().batch_callback(|_| vec![Msg::ClearSavedGame, Msg::BeginGame])}> {"New Game"}</button>
                                         {
                                             if Self::load().is_ok() {
@@ -218,7 +218,7 @@ impl Component for Model {
                         }
                         Phase::Setup => {
                             html!{
-                                <SetupComponent on_main_menu={ctx.link().callback(|_| Msg::ReturnToMainMenu)} on_completed={ctx.link().batch_callback(|_| vec![Msg::ClearSavedGame, Msg::BeginGame])}/>
+                                <RulesExplanation on_main_menu={ctx.link().callback(|_| Msg::ReturnToMainMenu)} on_completed={ctx.link().batch_callback(|_| vec![Msg::ClearSavedGame, Msg::BeginGame])}/>
                             }
                         }
                         Phase::PrepareForTimedPhase => {
