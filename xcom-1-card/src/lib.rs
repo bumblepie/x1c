@@ -251,7 +251,7 @@ where
 pub enum ResolutionPhasePrompt {
     AuditSpending,
     ResolveResearch,
-    ResolveUFODefense,
+    ResolveUFODefence,
     IncreasePanic,
     AskForBoardState,
     ResolveContinentBonuses,
@@ -264,7 +264,7 @@ impl ResolutionPhasePrompt {
         vec![
             Self::AuditSpending,
             Self::ResolveResearch,
-            Self::ResolveUFODefense,
+            Self::ResolveUFODefence,
             Self::IncreasePanic,
             Self::AskForBoardState,
             Self::ResolveContinentBonuses,
@@ -277,7 +277,7 @@ impl ResolutionPhasePrompt {
         match self {
             Self::AuditSpending => "Audit Spending",
             Self::ResolveResearch => "Resolve Research",
-            Self::ResolveUFODefense => "Resolve UFO Defense",
+            Self::ResolveUFODefence => "Resolve UFO Defence",
             Self::IncreasePanic => "Increase Panic",
             Self::AskForBoardState => "Update Board State",
             Self::ResolveContinentBonuses => "Gain Continent Bonuses",

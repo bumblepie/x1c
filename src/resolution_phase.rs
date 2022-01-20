@@ -326,6 +326,7 @@ impl Component for ResolutionPhase {
                                 },
                                 Focus::TechReference => html!{
                                     <div class="tech-ref-container">
+                                        <h1 class="prompt-title">{"Technology Reference"}</h1>
                                         <TechReference/>
                                     </div>
                                 },
@@ -374,7 +375,7 @@ fn icon_html_for_prompt(prompt: &ResolutionPhasePrompt) -> Html {
         ResolutionPhasePrompt::ResolveResearch => html! {
             <img class="prompt-icon" src="assets/icons/research.png"/>
         },
-        ResolutionPhasePrompt::ResolveUFODefense => html! {
+        ResolutionPhasePrompt::ResolveUFODefence => html! {
             <img class="prompt-icon" src="assets/icons/interceptor.png"/>
         },
         ResolutionPhasePrompt::IncreasePanic => html! {
@@ -437,10 +438,10 @@ fn description_html_for_prompt(
                 </div>
             </>
         },
-        ResolutionPhasePrompt::ResolveUFODefense => html! {
+        ResolutionPhasePrompt::ResolveUFODefence => html! {
             <>
                 <p>
-                    {"In any order, complete the "}{inline_icon_text_phrase("interceptor", "UFO Defense Task")}{" for each continent on the world map. Roll a number of "}{inline_icon_text_phrase("success", "Success Dice")}{" equal to the number of "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" assigned to the continent."}
+                    {"In any order, complete the "}{inline_icon_text_phrase("interceptor", "UFO Defence Task")}{" for each continent on the world map. Roll a number of "}{inline_icon_text_phrase("success", "Success Dice")}{" equal to the number of "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" assigned to the continent."}
                 </p>
                 <p>
                     {"Remember to increase the "}{inline_icon_text_phrase("alien", "Alien Threat")}{" by one after each attempt, and to reset the "}{inline_icon_text_phrase("alien", "Alien Threat")}{" when changing to a different continent."}
@@ -454,7 +455,7 @@ fn description_html_for_prompt(
                         if alien_base_discovered {
                             html!{
                                 <p>
-                                    {"Once all UFOs have been removed from the continent containing the "}{inline_icon_text_phrase("alien", "Alien Base,")}{" any additional "}{inline_icon_text_phrase("success", "Successes")}{" rolled in this continent's "}{inline_icon_text_phrase("interceptor", "UFO Defense Task")}{" instead add a "}{inline_icon_text_phrase("success", "Success Token")}{" on the "}{inline_icon_text_phrase("alien", "Alien Base.")}{" Once the third "}{inline_icon_text_phrase("success", "Success Token")}{" has been added to the "}{inline_icon_text_phrase("alien", "Alien Base")}{", it is destroyed!"}
+                                    {"Once all UFOs have been removed from the continent containing the "}{inline_icon_text_phrase("alien", "Alien Base,")}{" any additional "}{inline_icon_text_phrase("success", "Successes")}{" rolled in this continent's "}{inline_icon_text_phrase("interceptor", "UFO Defence Task")}{" instead add a "}{inline_icon_text_phrase("success", "Success Token")}{" on the "}{inline_icon_text_phrase("alien", "Alien Base.")}{" Once the third "}{inline_icon_text_phrase("success", "Success Token")}{" has been added to the "}{inline_icon_text_phrase("alien", "Alien Base")}{", it is destroyed!"}
                                 </p>
                             }
                         } else {
@@ -522,15 +523,26 @@ fn description_html_for_prompt(
                         {"Add one "}{inline_icon_text_phrase("success", "Success Token")}{" to the "}{inline_icon_text_phrase("tech", "Technology")}{" currently selected for research."}
                     </p>
                     <p>
-                        {"If there is no "}{inline_icon_text_phrase("tech", "Technology")}{" currently selected, select a "}{inline_icon_text_phrase("tech", "Technology")}{" with a "}{inline_icon_text_phrase("research", "Research Cost")}{" of at least 2 and then add a "}{inline_icon_text_phrase("success", "Success Token")}{" to it."}
+                        {"If there is no "}{inline_icon_text_phrase("tech", "Technology")}{" currently selected, draw the first token from the "}{inline_icon_text_phrase("tech", "Technology Token stack")}{" and select it, then add the "}{inline_icon_text_phrase("success", "Success Token.")}
+                    </p>
+                    <p>
+                        {"This may immediately complete the "}{inline_icon_text_phrase("research", "Research,")}{" granting you access to use the selected "}{inline_icon_text_phrase("tech", "Technology.")}
                     </p>
                 </div>
             </>
         },
         ResolutionPhasePrompt::CleanUp => html! {
-            <p>
-                {"Remove all UFO dice from the world map. Return all assigned "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" to your reserves."}
-            </p>
+            <>
+                <p>
+                    {"Remove all UFO dice from the world map."}
+                </p>
+                <p>
+                    {"Return all assigned "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" to your reserves."}
+                </p>
+                <p>
+                    {"Refresh all exhausted "}{inline_icon_text_phrase("tech", "Technology.")}
+                </p>
+            </>
         },
         ResolutionPhasePrompt::PurchaseReplacementForces => html! {
             <>

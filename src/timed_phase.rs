@@ -194,6 +194,7 @@ impl Component for TimedPhase {
                             },
                             Focus::TechReference => html!{
                                 <div class="tech-ref-container">
+                                    <h1 class="prompt-title">{"Technology Reference"}</h1>
                                     <TechReference/>
                                 </div>
                             },
@@ -312,10 +313,10 @@ fn description_html_for_prompt(prompt: &TimedPhasePrompt) -> Html {
         TimedPhasePrompt::ChooseResearch => html! {
             <>
                 <p>
-                    {"Select a "}{inline_icon_text_phrase("tech", "Technology")}{" to research. Set the "}{inline_icon_text_phrase("research", "Research Budget")}{" for the round."}
+                    {"Draw two "}{inline_icon_text_phrase("tech", "Technologies")}{" from the "}{inline_icon_text_phrase("tech", "Technology Token stack.")}{" Select one of them to research, or continue researching the currently selected "}{inline_icon_text_phrase("tech", "Technology ")}{" (if any)."}
                 </p>
                 <p>
-                    {"Each point in the "}{inline_icon_text_phrase("research", "Research Budget")}{" will cost §1."}
+                {"Set the "}{inline_icon_text_phrase("research", "Research Budget")}{" for the round. Each point in the "}{inline_icon_text_phrase("research", "Research Budget")}{" will cost §1."}
                 </p>
             </>
         },

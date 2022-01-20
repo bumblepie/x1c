@@ -135,7 +135,7 @@ impl Tech {
                 phase: PhaseUsage::Resolution,
                 description: html! {
                     <>
-                    {"When you would lose any amount of "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" during the "}{inline_icon_text_phrase("success", "UFO Defense")}{" task, lose one fewer "}{inline_icon_text_phrase("interceptor", "Interceptor.")}{" This can be used to reduce the number of lost "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" from one to zero. Like all "}{inline_icon_text_phrase("tech", "Technologies,")}{" this may only be used once per round."}
+                    {"When you would lose any amount of "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" during the "}{inline_icon_text_phrase("success", "UFO Defence")}{" task, lose one fewer "}{inline_icon_text_phrase("interceptor", "Interceptor.")}{" This can be used to reduce the number of lost "}{inline_icon_text_phrase("interceptor", "Interceptors")}{" from one to zero. Like all "}{inline_icon_text_phrase("tech", "Technologies,")}{" this may only be used once per round."}
                     </>
                 },
             },

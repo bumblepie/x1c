@@ -440,6 +440,7 @@ ul {
 }
 
 .tech-description {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
     font-size: medium;
     text-align: justify;
     line-height: 1.8em;
