@@ -17,6 +17,7 @@ const GAMESTATE_KEY: &str = "GameState";
 const PHASE_KEY: &str = "Phase";
 
 enum Msg {
+    BeginRulesExplanation,
     BeginSetup,
     BeginGame,
     ContinueGame,
@@ -79,7 +80,8 @@ impl Model {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 enum Phase {
     MainMenu,
-    Setup,
+    RulesExplanation,
+    SetUp,
     PrepareForTimedPhase,
     TimedPhase(Vec<TimedPhasePrompt>),
     PrepareForResolutionPhase,
@@ -101,8 +103,12 @@ impl Component for Model {
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
+            Msg::BeginRulesExplanation => {
+                self.phase = Phase::RulesExplanation;
+                true
+            }
             Msg::BeginSetup => {
-                self.phase = Phase::Setup;
+                self.phase = Phase::SetUp;
                 true
             }
             Msg::BeginGame => {
@@ -201,8 +207,8 @@ impl Component for Model {
                                 <div class="background-image prepare-screen" style="background-image: url(assets/background-art/alien-head.png)">
                                     <div class="prepare-screen-text">{ "X-1C" }</div>
                                     <div class="prepare-screen-button-container">
-                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::BeginSetup)}> {"Rules"}</button>
-                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().batch_callback(|_| vec![Msg::ClearSavedGame, Msg::BeginGame])}> {"New Game"}</button>
+                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::BeginRulesExplanation)}> {"Rules"}</button>
+                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().batch_callback(|_| vec![Msg::ClearSavedGame, Msg::BeginSetup])}> {"New Game"}</button>
                                         {
                                             if Self::load().is_ok() {
                                                 html!{
@@ -216,9 +222,29 @@ impl Component for Model {
                                 </div>
                             }
                         }
-                        Phase::Setup => {
+                        Phase::RulesExplanation => {
                             html!{
-                                <RulesExplanation on_main_menu={ctx.link().callback(|_| Msg::ReturnToMainMenu)} on_completed={ctx.link().batch_callback(|_| vec![Msg::ClearSavedGame, Msg::BeginGame])}/>
+                                <RulesExplanation on_main_menu={ctx.link().callback(|_| Msg::ReturnToMainMenu)} on_completed={ctx.link().batch_callback(|_| vec![Msg::ClearSavedGame, Msg::BeginSetup])}/>
+                            }
+                        }
+                        Phase::SetUp => {
+                            html!{
+                                <>
+                                    <h1 class="prompt-title">{rules::RulebookSection::SetUp.title()}</h1>
+                                    <div class="prompt-center-area">
+                                        <div class="side-buttons">
+                                        </div>
+                                        <div class="prompt-details">
+                                            <div class="prompt-description">
+                                                {rules::RulebookSection::SetUp.details()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bottom-panel">
+                                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::ReturnToMainMenu)}>{ "Main Menu" }</button>
+                                        <button class="button-back" onclick={ctx.link().callback(|_| Msg::BeginGame)}>{ "Continue" }</button>
+                                    </div>
+                                </>
                             }
                         }
                         Phase::PrepareForTimedPhase => {
