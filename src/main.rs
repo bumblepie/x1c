@@ -1,10 +1,12 @@
 mod common;
+mod prepare_for_timed_phase;
 mod resolution_phase;
 mod rules;
 mod tech_reference;
 mod timed_phase;
 
 use gloo_storage::{errors::StorageError, LocalStorage, Storage};
+use prepare_for_timed_phase::PrepareForTimedPhase;
 use rand::thread_rng;
 use resolution_phase::ResolutionPhase;
 use rules::RulesExplanation;
@@ -248,14 +250,7 @@ impl Component for Model {
                             }
                         }
                         Phase::PrepareForTimedPhase => {
-                            html! {
-                                <div class="background-image prepare-screen" style="background-image: url(assets/background-art/ufos-with-sunset.png)">
-                                    <div class="prepare-screen-text">{ "Prepare for Timed Phase" }</div>
-                                    <div class="prepare-screen-button-container">
-                                        <button class="prepare-screen-button button-shadow" onclick={ctx.link().callback(|_| Msg::EnterTimedPhase)}> {"Enter Timed Phase"}</button>
-                                    </div>
-                                </div>
-                            }
+                            html!{<PrepareForTimedPhase countdown_time={3000.0} on_countdown_completed={ctx.link().callback(|_| Msg::EnterTimedPhase)}/>}
                         }
                         Phase::TimedPhase(ref prompts) => {
                             html! {
