@@ -433,7 +433,7 @@ fn description_html_for_prompt(
                         {"The volatile alien technology explodes. Remove the selected "}{inline_icon_text_phrase("tech", "Technology")}{" from the game."}
                     </p>
                     <p>
-                        {"If you also rolled enough "}{inline_icon_text_phrase("success", "Successes")}{" to fully research the "}{inline_icon_text_phrase("tech", "Technology")}{", remove a different "}{inline_icon_text_phrase("tech", "Technology")}{" of your choice instead (you still gain the researched "}{inline_icon_text_phrase("tech", "Technology")}{")."}
+                        {"If you also rolled enough "}{inline_icon_text_phrase("success", "Successes")}{" to fully research the "}{inline_icon_text_phrase("tech", "Technology")}{", instead remove the top "}{inline_icon_text_phrase("tech", "Technology")}{" on the "}{inline_icon_text_phrase("tech", "Technology Stack")}{" from the game (you still gain the researched "}{inline_icon_text_phrase("tech", "Technology")}{")."}
                     </p>
                 </div>
             </>

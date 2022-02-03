@@ -273,6 +273,9 @@ fn icon_html_for_prompt(prompt: &TimedPhasePrompt) -> Html {
         TimedPhasePrompt::ChooseResearch => html! {
             <img class="prompt-icon" src="assets/icons/research.png"/>
         },
+        TimedPhasePrompt::SetResearchBudget => html! {
+            <img class="prompt-icon" src="assets/icons/research.png"/>
+        },
         TimedPhasePrompt::AssignInterceptors(continent) => html! {
             <div class="prompt-icon">
                 <img  src="assets/icons/interceptor.png"/>
@@ -315,6 +318,13 @@ fn description_html_for_prompt(prompt: &TimedPhasePrompt) -> Html {
                 <p>
                     {"Draw two "}{inline_icon_text_phrase("tech", "Technologies")}{" from the "}{inline_icon_text_phrase("tech", "Technology Token stack.")}{" Select one of them to research, or continue researching the currently selected "}{inline_icon_text_phrase("tech", "Technology ")}{" (if any)."}
                 </p>
+                <p>
+                    {"Return any "}{inline_icon_text_phrase("tech", "Technologies")}{" you did not select to the bottom of the "}{inline_icon_text_phrase("tech", "Technology Token stack.")}
+                </p>
+            </>
+        },
+        TimedPhasePrompt::SetResearchBudget => html! {
+            <>
                 <p>
                 {"Set the "}{inline_icon_text_phrase("research", "Research Budget")}{" for the round. Each point in the "}{inline_icon_text_phrase("research", "Research Budget")}{" will cost §1."}
                 </p>

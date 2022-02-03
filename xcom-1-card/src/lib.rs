@@ -58,6 +58,7 @@ pub enum TimedPhasePrompt {
     AddUFOsToLocation(Continent, i32),
     SwapUFOLocations(Continent, Continent),
     ChooseResearch,
+    SetResearchBudget,
     AssignInterceptors(Continent),
     AlienBaseDiscovered(Continent),
 }
@@ -95,19 +96,20 @@ impl TimedPhasePrompt {
 
     pub fn title(&self) -> String {
         match self {
-            TimedPhasePrompt::TakeIncome(_) => "Take Income".to_owned(),
-            TimedPhasePrompt::RollUFOLocation(continent) => {
+            Self::TakeIncome(_) => "Take Income".to_owned(),
+            Self::RollUFOLocation(continent) => {
                 format!("UFOs Spotted Over {:?}", continent)
             }
-            TimedPhasePrompt::AddUFOsToLocation(continent, _) => {
+            Self::AddUFOsToLocation(continent, _) => {
                 format!("More UFOs Spotted Over {:?}", continent)
             }
-            TimedPhasePrompt::SwapUFOLocations(_, _) => format!("UFOs on the Move"),
-            TimedPhasePrompt::ChooseResearch => "Choose Research".to_owned(),
-            TimedPhasePrompt::AssignInterceptors(continent) => {
+            Self::SwapUFOLocations(_, _) => format!("UFOs on the Move"),
+            Self::ChooseResearch => "Choose Research".to_owned(),
+            Self::SetResearchBudget => "Set Research Budget".to_owned(),
+            Self::AssignInterceptors(continent) => {
                 format!("Assign Interceptors to {:?}", continent)
             }
-            TimedPhasePrompt::AlienBaseDiscovered(continent) => {
+            Self::AlienBaseDiscovered(continent) => {
                 format!("Alien Base Discovered in {:?}", continent)
             }
         }
@@ -210,6 +212,7 @@ where
     prompts.append(&mut bonus_ufo_prompts);
     prompts.append(&mut assign_interceptor_prompts);
     prompts.push(TimedPhasePrompt::ChooseResearch);
+    prompts.push(TimedPhasePrompt::SetResearchBudget);
 
     let num_shifts = match leftover_ufos {
         n if n < 1 => 0,
