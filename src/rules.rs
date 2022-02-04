@@ -565,8 +565,20 @@ impl Component for RulesExplanation {
                     </div>
                 </div>
                 <div class="bottom-panel">
-                    <button class="button-back" onclick={ctx.link().callback(|_| Msg::PrevPrompt)} disabled={ self.current_section_index < 1 }>{ "Back" }</button>
-                    <button class="button-done" onclick={ctx.link().callback(|_| Msg::NextPrompt)}>{ "Done" }</button>
+                    <button
+                        class="button-back"
+                        onclick={ctx.link().callback(|_| Msg::PrevPrompt)}
+                        disabled={ !matches!(self.focus, Focus::Prompt) || self.current_section_index < 1 }
+                    >
+                        { "Back" }
+                    </button>
+                    <button
+                        class="button-done"
+                        onclick={ctx.link().callback(|_| Msg::NextPrompt)}
+                        disabled={ !matches!(self.focus, Focus::Prompt)}
+                    >
+                        { "Done" }
+                    </button>
                 </div>
                 </>
             }
