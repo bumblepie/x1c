@@ -342,7 +342,7 @@ fn description_html_for_prompt(prompt: &TimedPhasePrompt) -> Html {
         },
         TimedPhasePrompt::AlienBaseDiscovered(location) => html! {
             <>
-                {format!("Add the alien base token to {}. Destroy the alien base to win the game!", location)}
+                {"Place the "}{inline_icon_text_phrase("alien-base", "Alien Base Token")}{format!(" with the arrow pointing to {}. Any extra successes rolled during ", location)}{inline_icon_text_phrase("interceptor", "UFO Defence")}{" in this region will damage the "}{inline_icon_text_phrase("alien-base", "Alien Base.")}{" Damage the "}{inline_icon_text_phrase("alien-base", "Alien Base")}{" three times to destroy it and win the game!"}
             </>
         },
     }
