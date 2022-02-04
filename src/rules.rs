@@ -1,4 +1,5 @@
-use crate::common::inline_icon_text_phrase;
+use crate::common::{inline_icon_text_phrase, side_buttons, Focus};
+use crate::tech_reference::TechReference;
 use web_sys::Element;
 use yew::prelude::*;
 
@@ -186,7 +187,7 @@ impl RulebookSection {
                         {"The game is played over several rounds. Each round consists of a "}{inline_icon_text_phrase("time", "Timed Phase")}{" in which you have a limited amount of time to decide where to allocate your resources, followed by a "}{inline_icon_text_phrase("resolution", "Resolution Phase")}{" in which you resolve the consequences of your decisions."}
                     </p>
                     <p>
-                        {"At any time during the game, you can refer back to these rules by hitting the blue button on the left. This will pause the timer in the "}{inline_icon_text_phrase("time", "Timed Phase.")}
+                        {"At any time during the game (or this rules explanation), you can refer back to these rules by hitting the blue "}{inline_icon_text_phrase("help", "Help button")}{" on the left. This will pause the timer in the "}{inline_icon_text_phrase("time", "Timed Phase.")}
                     </p>
                 </>
             },
@@ -390,7 +391,7 @@ impl RulebookSection {
                         {"After using a "}{inline_icon_text_phrase("tech", "Technology")}{" you have researched, flip the "}{inline_icon_text_phrase("tech", "Technology token")}{" to the other side to show it has been exhausted."}
                     </p>
                     <p>
-                        {"At any time, you can see detailed information about each "}{inline_icon_text_phrase("tech", "Alien Technology")}{" by hitting the orange button on the left. This will pause the timer in the "}{inline_icon_text_phrase("time", "Timed Phase.")}
+                        {"At any time, you can see detailed information about each "}{inline_icon_text_phrase("tech", "Alien Technology")}{" by hitting the orange "}{inline_icon_text_phrase("tech", "Technology button")}{" on the left. This will pause the timer in the "}{inline_icon_text_phrase("time", "Timed Phase.")}
                     </p>
                 </>
             },
@@ -427,6 +428,8 @@ impl RulebookSection {
 pub enum Msg {
     NextPrompt,
     PrevPrompt,
+    ToggleTech,
+    ToggleResearch,
 }
 
 #[derive(Debug, Clone, PartialEq, Properties)]
@@ -439,6 +442,7 @@ pub struct RulesExplanation {
     sections: Vec<RulebookSection>,
     current_section_index: usize,
     prompt_details_ref: NodeRef,
+    focus: Focus,
 }
 
 impl Component for RulesExplanation {
@@ -451,6 +455,7 @@ impl Component for RulesExplanation {
             sections: RulebookSection::get_all(),
             current_section_index: 0,
             prompt_details_ref: NodeRef::default(),
+            focus: Focus::Prompt,
         }
     }
 
@@ -478,6 +483,20 @@ impl Component for RulesExplanation {
                     false
                 }
             }
+            Msg::ToggleTech => {
+                self.focus = match self.focus {
+                    Focus::Prompt | Focus::RulesReference => Focus::TechReference,
+                    Focus::TechReference => Focus::Prompt,
+                };
+                true
+            }
+            Msg::ToggleResearch => {
+                self.focus = match self.focus {
+                    Focus::Prompt | Focus::TechReference => Focus::RulesReference,
+                    Focus::RulesReference => Focus::Prompt,
+                };
+                true
+            }
         }
     }
 
@@ -491,9 +510,24 @@ impl Component for RulesExplanation {
                 <>
                     <h1 class="prompt-title">{"Training complete"}</h1>
                     <div class="prompt-center-area">
-                        <div class="side-buttons">
-                        </div>
-                        <p class="prompt-description">{"Your training is complete Commander, the real battle begins now. Good luck."}</p>
+                        {side_buttons(ctx.link().callback(|_| Msg::ToggleTech), ctx.link().callback(|_| Msg::ToggleResearch))}
+                        {match self.focus {
+                            Focus::Prompt => html!{
+                                <p class="prompt-description">{"Your training is complete Commander, the real battle begins now. Good luck."}</p>
+                            },
+                            Focus::TechReference => html!{
+                                <div class="tech-ref-container">
+                                    <h1 class="prompt-title">{"Technology Reference"}</h1>
+                                    <TechReference/>
+                                </div>
+                            },
+                            Focus::RulesReference => html!{
+                                <div class="rules-ref-container">
+                                    <h1 class="prompt-title">{"Rules Reference"}</h1>
+                                    {rules_reference()}
+                                </div>
+                            },
+                        }}
                     </div>
                     <div class="bottom-panel">
                         <button class="button-back" onclick={ctx.link().callback(|_| Msg::PrevPrompt)} disabled={ self.current_section_index < 1 }>{ "Back" }</button>
@@ -509,11 +543,24 @@ impl Component for RulesExplanation {
                 <>
                 <h1 class="prompt-title">{title}</h1>
                 <div class="prompt-center-area">
-                    <div class="side-buttons">
-                    </div>
+                    {side_buttons(ctx.link().callback(|_| Msg::ToggleTech), ctx.link().callback(|_| Msg::ToggleResearch))}
                     <div class="prompt-details" ref={self.prompt_details_ref.clone()}>
                         <div class="prompt-description">
-                            {main}
+                            {match self.focus {
+                                Focus::Prompt => {main},
+                                Focus::TechReference => html!{
+                                    <div class="tech-ref-container">
+                                        <h1 class="prompt-title">{"Technology Reference"}</h1>
+                                        <TechReference/>
+                                    </div>
+                                },
+                                Focus::RulesReference => html!{
+                                    <div class="rules-ref-container">
+                                        <h1 class="prompt-title">{"Rules Reference"}</h1>
+                                        {rules_reference()}
+                                    </div>
+                                },
+                            }}
                         </div>
                     </div>
                 </div>

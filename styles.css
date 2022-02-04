@@ -48,7 +48,7 @@ img {
 .prompt-center-area {
     flex-grow: 1;
     display: grid;
-    grid-template-columns: 1fr 6fr 1fr;
+    grid-template-columns: 1fr 8fr 1fr;
     overflow: hidden;
     gap: 10px;
 }
